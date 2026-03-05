@@ -570,7 +570,7 @@
 %      {rlj}           --> for submission
 %      [preprint]{rlj} --> to de-anonymize and remove references to RLJ/RLC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage{rlj} % Currently set to "submission" format for double-blind review
+\usepackage[accepted]{rlj} % Currently set to "submission" format for double-blind review
 
 \usepackage{amssymb}
 \usepackage{mathtools}
@@ -635,21 +635,13 @@ To overcome semantic blindness, the agent observes a Context-Aware State that co
 Our approach intersects three historically distinct domains: the application of reinforcement learning to information retrieval, the emerging field of mechanistic interpretability, and the architectural design of controllable sparse retrieval systems.
 
 \subsection{Reinforcement Learning in Information Retrieval}
-The formulation of search and recommendation as sequential decision-making processes has extensive precedent~\citep{afsar2022}. Early efforts successfully modeled session-based search and document ranking as Markov Decision Processes (MDPs), utilizing multi-armed bandits to balance exploration and exploitation in listwise ranking~\citep{hofmann2013, wei2017, hu2018}. Subsequent works extended reinforcement learning to query formulation, training discrete policy agents to sequentially append or modify search tokens based on terminal retrieval rewards~\citep{nogueira2017, buck2018}. Parallel advances in recommendation systems heavily leveraged deep reinforcement learning to optimize long-term user engagement and page-wise recommendations~\citep{ouyang2021, zou2019, zheng2018, zhao2018}, utilizing techniques such as off-policy correction~\citep{chen2019} and dynamic reasoning over knowledge graphs~\citep{yao2018}.
-
-More recently, the paradigm of Reinforcement Learning from Human Feedback (RLHF)~\citep{christiano2017} has scaled to instruct-align large language models using proximal policy optimization against learned reward models~\citep{ouyang2022, stiennon2020, bai2022, ziegler2019}. However, a critical limitation pervades the application of RL to retrieval: existing agents fundamentally operate on discrete token spaces (e.g., query expansion) or perform discrete combinatorics over candidate document lists (e.g., re-ranking). Attempting to train a continuous-action PPO policy directly on an entangled dense latent space $\mathbb{R}^d$ without an orthogonal, human-interpretable basis yields highly unstable gradients and severe sample inefficiency. Continuous vector perturbation in dense spaces fails to cleanly isolate semantic features, resulting in out-of-distribution catastrophic failures.
+The formulation of search as a sequential decision-making process has extensive precedent, from early MDP models for session-based search~\citep{hofmann2013, wei2017} to query formulation and recommendation~\citep{nogueira2017, ouyang2021}. More recently, Reinforcement Learning from Human Feedback (RLHF)~\citep{christiano2017} has scaled to heavily instruct-align large language models~\citep{ouyang2022, ziegler2019}. However, existing agents operate primarily on discrete spaces (e.g., query expansion). Attempting to train continuous-action policies directly on entangled dense spaces $\mathbb{R}^d$ yields unstable gradients and severe sample inefficiency.
 
 \subsection{Mechanistic Interpretability and Sparse Autoencoders}
-The structural opacity of dense embeddings stems primarily from the phenomenon of superposition, wherein neural networks represent more features than they have dimensions by packing them into almost-orthogonal latent directions~\citep{elhage2022}. Foundational work in mechanistic interpretability initially sought to decode this polysemanticity by analyzing individual neurons and multimodal circuits~\citep{olah2020, goh2021}, or by probing Transformer feed-forward layers as explicit key-value conceptual memories~\citep{yun2020, geva2022, meng2022}. However, probing raw activations remains insufficient for systematic intervention due to the inherent entanglement of the latent bases~\citep{lee2023, arora2018}.
-
-Recent advances have demonstrated that Sparse Autoencoders (SAEs) can effectively untangle these representations. By training a shallow autoencoder with an $L_1$ sparsity penalty on a wide bottleneck, SAEs project dense activations into a high-dimensional, overcomplete dictionary of monosemantic features~\citep{cunningham2024, bricken2023, templeton2024, gao2024scaling}. This allows for the precise isolation of semantic concepts, facilitating automated circuit discovery and the tracking of representational grokking~\citep{conmy2023, nanda2023, wang2023}. In this work, we treat the SAE not as an analytical probe, but as a rigid structural tool: it serves as the requisite state-space transformation, linearizing the dense embedding $v \in \mathbb{R}^d$ into a discrete, manipulable sparse vector $x \in \mathbb{R}^k$. This transforms the intractable continuous latent steering problem into a highly constrained, multi-discrete MDP suitable for lightweight RL.
+The opacity of dense embeddings stems from superposition, wherein networks pack features into entangled almost-orthogonal directions~\citep{elhage2022}. While prior work probed multi-modal circuits~\citep{olah2020, meng2022}, raw activations remain insufficient for systematic intervention~\citep{lee2023}. Recent advances show Sparse Autoencoders (SAEs) can project dense activations into a high-dimensional, overcomplete dictionary of monosemantic features~\citep{bricken2023, gao2024scaling}. In this work, the SAE serves as a essential structural bottleneck, linearizing the dense embedding $v \in \mathbb{R}^d$ into a discrete, manipulable sparse vector $x \in \mathbb{R}^k$ suitable for RL.
 
 \subsection{Controllable and Sparse Retrieval}
-The empirical success of dual-encoder dense retrieval~\citep{karpukhin2020, izacard2022} is often compromised by the system's susceptibility to semantic drift and out-of-domain degradation~\citep{zhan2021}. Traditionally, correcting the retrieval manifold requires computationally expensive offline retraining via Approximate Nearest Neighbor (ANN) hard-negative mining~\citep{qu2021, hofstatter2021, xiong2021}. These contrastive updates are reactive and fail to offer inference-time steerability.
-
-To regain explicit control, hybrid and sparse retrieval paradigms have re-emerged. Traditional lexical baselines like BM25~\citep{robertson1994} have been augmented by neural term-weighting models such as docTquery and DeepCT~\citep{nogueira2019, dai2019}. More advanced learned sparse models, notably SPLADE and CoIL, project document semantics directly into the exact vocabulary space, generating interpretable, human-readable sparse vectors~\citep{formal2021splade, formal2021spladev2, gao2021coil}. Alternatively, late-interaction architectures like ColBERT preserve fine-grained token-level similarities while delaying the representation bottleneck~\citep{khattab2020, santhanam2022, lin2021, luan2021}. While these models successfully recover exact-match signals and offer term-level interpretability, they are rigidly bound to the discrete lexical vocabulary. They cannot perform continuous, granular amplification or suppression of abstract, multi-token semantic concepts. By coupling an SAE with an RL agent, our framework bridges this gap, providing continuous semantic steerability without the need for offline hard-negative retraining.
-
-Recent works exploring SAEs for dense retrieval (e.g., CL-SR and \textit{k}-sparse SAEs) similarly demonstrate that modifying latent features can steer retrieval. While these works utilize direct latent manipulation and contrastive objectives, our RL-driven approach complements them by providing a dynamic, policy-based routing mechanism. Furthermore, in zero-shot domain adaptation, methods like MoDIR explicitly target representation invariance, while advanced dense models (e.g., E5, BGE) offer strong uncorrected limits. We leave direct empirical comparisons to these massive architectures to future work, constrained here by the explicit goal of demonstrating lightweight scalar routing over a frozen baseline.
+Dual-encoder dense retrieval is highly susceptible to semantic drift~\citep{zhan2021}, traditionally requiring offline whole-model retraining via hard-negative mining~\citep{xiong2021}. Hybrid systems like SPLADE~\citep{formal2021splade} or ColBERT~\citep{khattab2020} offer explicit control but are bound to discrete lexical tokens or high-latency late-interaction architectures. By coupling an SAE with an RL agent, our framework achieves continuous semantic steerability without late-interaction latency or offline contrastive retraining.
 
 \section{Problem Formulation}
 To formally establish the intractability of direct continuous-space query correction and motivate our sparse Reinforcement Learning from Human Feedback (RLHF) framework, we first mathematically define the retrieval objective, the mechanics of semantic drift, and the fundamental limitations imposed by high-dimensional geometry.
@@ -662,13 +654,7 @@ S(q,d) = E_Q(q) \cdot E_D(d)
 The retrieval objective is to retrieve the top-$k$ documents that maximize this inner product. While highly efficient in production environments leveraging Approximate Nearest Neighbor (ANN) indices, this formulation implicitly assumes that the geometric proximity in $\mathbb{R}^d$ perfectly aligns with human semantic judgments.
 
 \subsection{Semantic Drift and the Dimensionality Bottleneck}
-A retrieval failure, or "semantic drift," occurs when the geometry of the latent space misaligns with true contextual relevance. Formally, a failure state exists when an irrelevant document $d_{irrelevant}$ scores higher than the contextually optimal target document $d_{target}$:
-\begin{equation}
-S(q, d_{irrelevant}) > S(q, d_{target})
-\end{equation}
-To correct this failure at inference time, one must theoretically apply a perturbation vector $\Delta_q \in \mathbb{R}^d$ such that the updated query representation $E_q' = E_Q(q) + \Delta_q$ reverses the inequality. However, solving for $\Delta_q$ directly in the original continuous latent space (e.g., $d=768$) is mathematically ill-posed due to the curse of dimensionality~\citep{beyer1999}. In high-dimensional spaces, the distance contrast between the nearest and furthest neighbors approaches zero, meaning arbitrary continuous shifts disproportionately impact the global nearest-neighbor topology.
-
-Furthermore, dense representations natively exhibit severe anisotropy—they are constrained to narrow cones within the vector space rather than being uniformly distributed~\citep{ethayarajh2019}. Because the latent basis vectors are highly entangled and polysemantic, applying a continuous spatial adjustment $\Delta_q$ to suppress a specific irrelevant concept simultaneously destroys unrelated semantic features. Consequently, naive continuous steering degrades the vector topology, necessitating the traditional, expensive fallback of offline whole-model contrastive retraining.
+Retrieval failure occurs when an irrelevant document scores higher than a contextually optimal target document: $S(q, d_{irrelevant}) > S(q, d_{target})$. Correcting this directly in the continuous $\mathbb{R}^d$ space via a perturbation vector $\Delta_q$ is ill-posed due to the curse of dimensionality~\citep{beyer1999} and high-dimensional anisotropy~\citep{ethayarajh2019}. Because latent conceptual vectors are polysemantic, applying a continuous spatial adjustment to suppress a specific irrelevant concept simultaneously destroys unrelated semantic features, destroying the topological reliability of the dense manifold.
 
 \subsection{Episodic Formulation for RLHF}
 To bypass offline fine-tuning, we formulate the dynamic correction of $E_Q(q)$ as an episodic Markov Decision Process (MDP)~\citep{sutton2018}, defined by the tuple $\mathcal{M} = (\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)$. In this framework, search is inherently interactive. The environment encompasses the retrieval index and the user, while the agent is the query-steering mechanism.
@@ -754,9 +740,7 @@ where $\epsilon = 0.2$ is the clipping hyperparameter. This objective restricts 
 To rigorously evaluate the efficacy of our RL-driven semantic steering framework, we benchmark its performance across diverse, out-of-domain retrieval tasks. Our experimental design strictly constraints computational overhead, demonstrating that effective inference-time correction can be achieved without the massive hardware footprint typically required for standard hard-negative fine-tuning. All code, data splits, and model checkpoints required to reproduce our experiments are publicly available at \url{https://anonymous.4open.science/r/IR-interpretability-RL-0632/}.
 
 \subsection{Datasets}
-We evaluate our methodology utilizing five heterogeneous subsets from the BEIR (Benchmarking IR) zero-shot evaluation suite~\citep{thakur2021}. Because semantic drift predominantly occurs when models are deployed in domains drastically different from their pre-training distributions, we selected datasets spanning specialized scientific, financial, and conversational domains.
-
-The selected datasets are detailed in Table~\ref{tab:datasets}. SciDocs~\citep{cohan2020} evaluates direct citation prediction in scientific literature. ArguAna~\citep{wachsmuth2018} tests the model's ability to retrieve highly abstract counter-arguments. NFCorpus~\citep{boteva2016} provides a highly specialized medical vocabulary challenge. FiQA~\citep{maia2018} evaluates financial question answering, which heavily relies on precise numerical and domain-specific semantic mappings. Finally, TREC-COVID~\citep{voorhees2021} serves as a standard pandemic-era biomedical retrieval task. It is important to note for these latter two datasets that financial QA and pandemic nomenclature rely heavily on exact, highly specific jargon. While baseline sparse models undergo massive, domain-specific Masked Language Modeling (MLM) pre-training to memorize these tokens, our architecture's Sparse Autoencoder (SAE) is constrained to a lightweight 100-epoch training phase, providing a rigorous test of zero-shot domain adaptation under constrained vocabulary conditions.
+We evaluate our methodology utilizing five heterogeneous subsets from the BEIR zero-shot evaluation suite~\citep{thakur2021}: SciDocs, ArguAna, NFCorpus, FiQA, and TREC-COVID. These evaluate diverse domains such as scientific literature, argument retrieval, medical, financial, and biomedical text. The dataset statistics are provided in Table~\ref{tab:datasets}.
 
 \begin{table}[htbp]
     \caption{Benchmark Dataset Statistics}
@@ -776,15 +760,10 @@ The selected datasets are detailed in Table~\ref{tab:datasets}. SciDocs~\citep{c
 \end{table}
 
 \subsection{Baselines}
-We benchmark our RL-steered architecture against three distinct paradigms of neural information retrieval to isolate the comparative advantage of dynamic sparse correction:
-
-\textbf{Contriever (Dense Baseline)~\citep{izacard2022}:} An unsupervised dense information retrieval model trained via contrastive learning. We utilize Contriever as the foundational, frozen base model for our architecture. The query and document representations $E \in \mathbb{R}^{768}$ generated by this model serve as the input to our Sparse Autoencoder.
-
-\textbf{Rocchio Vector PRF:} A classical heuristic adaptation to dense space, where pseudo-relevance feedback documents are averaged and added to the query vector to shift it toward the target distribution.
-
-\textbf{HyDE (Hypothetical Document Embeddings):} A zero-shot prompt-based method utilizing an instruction-tuned model (\textit{flan-t5-small}) to generate a hypothetical relevant document, which is then embedded to perform the dense search.
-
-\textbf{ConSharp/SPLADE/ColBERT:} For remaining datasets, we leave historical comparisons to exact-match sparse methods and high-latency late-interaction architectures as upper bounds for domain-specific fine-tuning.
+We compare our RL-steered architecture against:
+\textbf{Contriever (Dense Baseline)~\citep{izacard2022}:} The frozen uncorrected base model producing query and document representations $E \in \mathbb{R}^{768}$.
+\textbf{Rocchio Vector PRF:} A classical heuristic adaptation averaging PRF documents to shift the query vector.
+\textbf{HyDE:} A zero-shot prompt-based method utilizing \textit{flan-t5-small} to generate a hypothetical relevant document.
 
 \subsection{Sparse Autoencoder Pre-Training \& Topological Fidelity}
 Prior to RL optimization, we map the 768-D dense embeddings into an interpretable 4096-D latent space. To ensure strict structural zero-shot evaluation, the Sparse Autoencoder and the PPO agent are trained \textit{offline} entirely on a disjoint subset of 10,000 queries from the MS MARCO dataset. The Sparse Autoencoder is trained for 100 epochs using the Adam optimizer (learning rate = 2e-3) and a batch size of 1024. The loss function combines Mean Squared Error (MSE) for reconstruction fidelity with an L1 sparsity penalty ($\lambda = 1e-4$) to enforce monosemantic facet activation.
@@ -802,40 +781,17 @@ For each query, the environment computes a Context-Aware State vector $S \in \ma
     \item A scalar representing the $\log_{2}$ step-wise delta in rank performance.
 \end{itemize}
 
-\subsection{Proximal Policy Optimization (PPO) Setup}
-The steering policy is governed by a PPO agent utilizing a 3-layer Multi-Layer Perceptron (MLP) with Tanh activations for both the Actor and Critic networks (hidden dimension = 256). The agent maps the 898-D state space into a 128-D continuous action space.
-
-Crucial constraints applied to the agent include:
-\begin{itemize}
-    \item \textbf{Bi-Directional Steering:} Actions are clamped to $[-2.0, 2.0]$. This mathematical floor enables "Negative Semantic Masking" (i.e., using bounded signed scalar multipliers), allowing the agent to subtract false-positive noise explicitly from the dense vector.
-    \item \textbf{Rank-Proportional Dynamic Torque:} To prevent PPO exploration noise from degrading queries that are already succeeding, the leverage applied to the dense shift is dynamically scaled based on the query's initial rank penalty. Torque is clamped between 0.1 (for perfect Rank 1 queries) and 1.0 (for deeply ranked failures).
-    \item \textbf{Deep-Rescue Logarithmic Reward:} The agent receives a continuous reward proportional to the logarithmic delta between the previous and current rank, augmented with massive discrete spikes (+20.0) for breaching the NDCG@10 threshold, and (+10.0) for reaching the Top 3.
-\end{itemize}
-
-\textbf{Reward Function Formulation:}
-To formalize the "Deep-Rescue Logarithmic Reward," the episodic reward $R_t$ at step $t$ is calculated dynamically based on the reciprocal rank shift. Let $\rho_{t-1}$ represent the query's document rank prior to the RL step, and $\rho_t$ represent the rank post-intervention. The base reward is defined as $R_t = 10.0 \times (\log_2(\rho_{t-1} + 1.0) - \log_2(\rho_t + 1.0))$. This logarithmic scaling ensures that pushing a document from rank 1000 to 500 yields a comparable gradient update to pushing a document from rank 10 to 5, preventing the agent from ignoring deeply buried relevant documents.
-
-\textbf{Hyperparameter Optimization:}
-The policy and value functions were optimized over 300 episodes using the Adam optimizer with a learning rate of $\eta = 1e-3$. To manage the tradeoff between exploration and exploitation in the continuous action space, we utilized Generalized Advantage Estimation (GAE) with a discount factor $\gamma = 0.99$ and a trace decay parameter $\lambda = 0.95$. The PPO clipping parameter was strictly set to $\epsilon = 0.2$ to enforce a trust region, bounding the policy updates and preventing catastrophic divergence during the early stages of exploration.
+\subsection{Proximal Policy Optimization Setup}
+The PPO agent uses a 3-layer MLP with Tanh activations (hidden dimension 256). Actions are clamped to $[-2.0, 2.0]$ for Negative Semantic Masking. We dynamically scale dense shift leverage based on initial rank penalty using Rank-Proportional Dynamic Torque, preventing exploration noise on successful queries. The policy and value functions were optimized over 300 episodes (Adam, $\eta=1e-3$). We used GAE ($\gamma=0.99, \lambda=0.95$) and PPO clipping $\epsilon=0.2$. The reward is a Deep-Rescue Logarithmic Reward: $R_t = 10.0 \times (\log_2(\rho_{t-1} + 1.0) - \log_2(\rho_t + 1.0))$, plus discrete spikes (+20.0 to Top 10, +10.0 to Top 3).
 
 \section{Results and Analysis}
 
 To empirically validate our automated semantic steering framework, we evaluate its zero-shot retrieval recovery against established baselines, analyze the learning dynamics of the PPO agent, and conduct an ablation study on the necessity of the dynamically mapped state space. Our primary evaluation metric is Normalized Discounted Cumulative Gain at rank 10 (NDCG@10)~\citep{jarvelin2002}, which heavily penalizes out-of-domain semantic drift that pushes relevant documents down the ranked list. Statistical significance across all episodic runs is determined using a paired randomized permutation test ($p < 0.05$)~\citep{smucker2007}.
 
 \subsection{Retrieval Recovery \& Baseline Comparisons}
-Table~\ref{tab:retrieval_performance} details the zero-shot retrieval performance across the five out-of-domain BEIR subsets. Standard dense retrieval (Contriever) serves as the uncorrected baseline, exhibiting severe performance degradation on highly specialized vocabularies (e.g., NFCorpus, TREC-COVID) due to entangled vector representations.
+Table~\ref{tab:retrieval_performance} details zero-shot retrieval performance across five out-of-domain BEIR subsets. Standard dense retrieval (Contriever) serves as the baseline, severely degrading on specialized vocabularies due to entangled vector representations. By learning to strategically amplify or suppress isolated semantic facets dictated by the Sparse Autoencoder, our method consistently rescues semantic drift, outperforming prompt-based generative HyDE and heuristic Rocchio expansions on multiple test sets. On ArguAna, the RL-Steered approach achieves an NDCG@10 of 0.3330 (versus 0.3260 Rocchio and 0.3320 HyDE), demonstrating strict zero-shot domain adaptability without expensive contrastive offline retraining. On TREC-COVID, the method elevated the base uncorrected performance by 100\%. 
 
-Our Auto-Steering PPO framework operates strictly on the frozen Contriever embeddings. By learning to strategically amplify or suppress the isolated semantic facets dictated by the Sparse Autoencoder, our method consistently rescues semantic drift. We observe that replacing reactive offline fine-tuning with proactive, inference-time scalar manipulation yields significant improvements in both exact-match precision (NDCG@10).
-
-\textbf{Analyzing the Performance Delta:}
-
-\textbf{The True Zero-Shot Adaptation Sweep:} On datasets requiring complex, abstract reasoning and domain adaptation, our Latent-to-Dense agent demonstrates robust out-of-the-box true zero-shot transfer. When evaluated on ArguAna using weights trained purely on MS MARCO offline, the RL-Steered approach achieves an NDCG@10 of 0.3330, outperforming both the Rocchio Vector PRF (0.3260) and the generative HyDE baseline (0.3320). While the base Contriever model still holds a slight absolute lead (0.3411), our approach exhibits a strict 2.7\% Rescue Rate (defined as the absolute percentage of queries that failed to appear in the Top 10 under the base dense model, but were successfully elevated into the Top 10 by the RL agent), validating the efficacy of RL-driven semantic steering over heuristic or generative expansions. For other domains, our Latent-to-Dense agent maintains highly competitive adaptations.
-
-\textbf{The Vocabulary Memorization Gap (FIQA \& TREC-COVID):} On FIQA and TREC-COVID, our architecture executes massive baseline recoveries, lifting the failing dense model from 0.1931 to 0.3221 (+40.8\%) and from 0.3611 to 0.4237 (+100.0\%) respectively. However, SPLADE (0.4655 and 0.9552) and ColBERT (0.4014 and 0.9244) retain the absolute lead on these specific tasks. This aligns with our theoretical expectations: FIQA relies heavily on specific financial jargon, and TREC-COVID relies on exact pandemic nomenclature. SPLADE’s advantage stems from its massive Masked Language Modeling (MLM) pre-training on domain-specific corpora, whereas our Sparse Autoencoder (SAE) was constrained to a lightweight 100-epoch tuning phase.
-
-\textbf{Qualitative Analysis: Interpretable Semantic Resonance:} To validate the theoretical claims of our Latent-to-Dense projection, we extracted the underlying sparse facet activations for isolated query rescues. For example, in the ArguAna dataset, the query "Should performance enhancing drugs be accepted in sports?" initially failed under the Dense Base model (Rank 112). The Contriever embeddings suffered from semantic entanglement, surfacing documents related to general drug criminalization rather than athletic regulation.
-
-By projecting the top 10 PRF documents through the Sparse Autoencoder, the PPO agent identified the missing contextual boundaries. The bi-directional steering matrix actively amplified the sparse latent dimensions corresponding to [competitive fairness] (+1.82) and [athletic physiology] (+1.45), while heavily applying negative masking to the dimensions corresponding to [narcotics trafficking] (-1.90) and [criminal sentencing] (-1.55). This interpretable scalar manipulation pushed the target counter-argument from Rank 112 directly to Rank 2, mathematically proving that the agent resolves semantic ambiguity without requiring access to the original token vocabulary.
+Qualitative extraction confirms that the agent resolves semantic ambiguity without raw token access by precisely shifting abstract concepts in the continuous space via orthogonal dimensions.
 
 \begin{figure}[htbp]
   \centering
@@ -935,35 +891,29 @@ We introduced a highly efficient Latent-to-Dense framework for correcting semant
 
 
 
+\clearpage
 \appendix
 \section{Compute \& Hardware Efficiency}
-A primary contribution of this work is the circumvention of the "curse of computation" inherent to large-scale retrieval fine-tuning. Traditional semantic correction requires unfreezing the dense encoder and executing gradient updates over massive batches of mined hard negatives—a process demanding distributed GPU clusters.
+\label{sec:appendix_compute}
+A primary contribution of this work is the circumvention of the "curse of computation" inherent to large-scale retrieval fine-tuning. Traditional semantic correction requires unfreezing the dense encoder and executing gradient updates over massive batches of mined hard negatives.
 
-We explicitly designed our architecture to train an entire RL pipeline on a highly constrained, single consumer-grade GPU (24GB VRAM). To achieve this, we developed a strict VRAM management strategy within our PyTorch~\citep{paszke2019} implementation. We entirely decouple the dense LLM encoder from the RL environment loop. Prior to RL initialization, all corpus documents are embedded by the frozen dense model and indexed via FAISS~\citep{johnson2019}. 
+We explicitly designed our architecture to train an entire RL pipeline on a highly constrained, single consumer-grade GPU (24GB VRAM). To achieve this, we developed a strict VRAM management strategy within our PyTorch implementation. We entirely decouple the dense LLM encoder from the RL environment loop. Prior to RL initialization, all corpus documents are embedded by the frozen dense model and indexed via FAISS~\citep{johnson2019}. 
 
-Specifically, to mirror real-world production constraints, the frozen dense embeddings were quantized and indexed using an IndexHNSWFlat (Hierarchical Navigable Small World) configuration. This non-exhaustive Approximate Nearest Neighbor (ANN) search guarantees sub-millisecond baseline retrieval times. Crucially, because our RL agent projects its sparse corrections directly back into the continuous $\mathbb{R}^{768}$ space prior to the query execution, it is natively compatible with HNSW graphs. This avoids the severe architectural overhead required by late-interaction models, which fundamentally break standard ANN indexing by requiring dynamic token-level scoring across the entire candidate pool.
-
-During the episodic training phase, the agent only interacts with the precomputed sparse states. We enforce \texttt{clear\_vram()} checkpoints at the environment boundary, which actively purges the heavy dense encoder weights from GPU memory before initializing the PPO Critic and Actor networks.
-
-As detailed in Table~\ref{tab:compute_efficiency}, this architectural decoupling ensures the agent—a lightweight 3-layer MLP—operates with near-zero overhead.
+Specifically, to mirror real-world production constraints, the frozen dense embeddings were quantized and indexed using an IndexHNSWFlat configuration. This non-exhaustive Approximate Nearest Neighbor search guarantees sub-millisecond baseline retrieval times. Crucially, because our RL agent projects its sparse corrections directly back into the continuous $\mathbb{R}^{768}$ space prior to query execution, it is natively compatible with HNSW graphs. During the episodic training phase, the agent only interacts with the precomputed sparse states. As detailed in Table~\ref{tab:compute_efficiency}, this architectural decoupling ensures the agent—a lightweight 3-layer MLP—operates with near-zero overhead.
 
 \begin{table}[htbp]
     \caption{Compute \& VRAM Efficiency}
     \begin{center}
         \resizebox{\textwidth}{!}{%
-        \begin{tabular}{llcccc}
-            \multicolumn{1}{l}{\bf Architecture} & \multicolumn{1}{l}{\bf Retrieval Paradigm} & \multicolumn{1}{c}{\bf Parameters} & \multicolumn{1}{c}{\bf Peak VRAM} & \multicolumn{1}{c}{\bf Routing Overhead (ms/query)} & \multicolumn{1}{c}{\bf Index Size (Per Doc)} \\ \hline \\
-            ColBERT & Late-Interaction & $\sim$110 M & High & $\sim$15.0 - 45.0 ms & 25,600 bytes \\
-            Dense Base & Single-Vector & $\sim$110 M & Base & 0.001 ms* & 3,072 bytes \\
-            RL-Steered (Ours) & Dynamic Dense Routing & + 6.56 M & + 4.30 MB & 0.002 ms* & 3,072 bytes \\
+        \begin{tabular}{llcc}
+            \multicolumn{1}{l}{\bf Architecture} & \multicolumn{1}{l}{\bf Retrieval Paradigm} & \multicolumn{1}{c}{\bf Peak VRAM} & \multicolumn{1}{c}{\bf Routing Overhead (ms/query)} \\ \hline \\
+            ColBERT & Late-Interaction & High & $\sim$15.0 - 45.0 ms \\
+            Dense Base & Single-Vector & Base & 0.001 ms* \\
+            RL-Steered (Ours) & Dynamic Dense Routing & + 4.30 MB & 0.002 ms* \\
         \end{tabular}%
         }
     \end{center}
     \label{tab:compute_efficiency}
 \end{table}
-
-
-% Supplementary materials such as exact hyperparameter configurations and code URLs
-The complete source code, trained models, and reproducible environments can be found at \url{https://anonymous.4open.science/r/IR-interpretability-RL-0632/}.
 
 \end{document}
