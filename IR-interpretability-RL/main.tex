@@ -914,4 +914,29 @@ Specifically, to mirror real-world production constraints, the frozen dense embe
     \label{tab:compute_efficiency}
 \end{table}
 
+\section{Extended Conceptual and Experimental Context}
+
+To ensure full reproducibility and to provide a comprehensive view of the literature and theoretical grounding omitted from the main text due to length constraints, we provide the following expanded context.
+
+\subsection{Extended Related Work and Dense Retrieval Vulnerabilities}
+The empirical success of dual-encoder dense retrieval~\citep{karpukhin2020, izacard2022} is often compromised by the system's susceptibility to semantic drift and out-of-domain degradation~\citep{zhan2021}. Traditionally, correcting the retrieval manifold requires computationally expensive offline retraining via Approximate Nearest Neighbor (ANN) hard-negative mining~\citep{qu2021, hofstatter2021, xiong2021}. These contrastive updates are reactive and fail to offer inference-time steerability.
+
+To regain explicit control, hybrid and sparse retrieval paradigms have re-emerged. Traditional lexical baselines like BM25~\citep{robertson1994} have been augmented by neural term-weighting models such as docTquery and DeepCT~\citep{nogueira2019, dai2019}. More advanced learned sparse models project document semantics directly into the exact vocabulary space, generating interpretable, human-readable sparse vectors~\citep{formal2021splade, formal2021spladev2, gao2021coil}. Alternatively, late-interaction architectures like ColBERT preserve fine-grained token-level similarities while delaying the representation bottleneck~\citep{khattab2020, santhanam2022, lin2021, luan2021}. 
+
+Furthermore, dense representations natively exhibit severe anisotropy—they are constrained to narrow cones within the vector space rather than being uniformly distributed~\citep{ethayarajh2019}. Because latent basis vectors are highly entangled and polysemantic, applying a continuous spatial adjustment $\Delta_q$ to suppress a specific irrelevant concept simultaneously destroys unrelated semantic features, suffering from the curse of dimensionality~\citep{beyer1999}.
+
+\subsection{Sparse Autoencoders and Circuit Discovery}
+Recent advances have demonstrated that Sparse Autoencoders (SAEs) can effectively untangle these representations. By training a shallow autoencoder with an $L_1$ sparsity penalty on a wide bottleneck, SAEs project dense activations into a high-dimensional, overcomplete dictionary of monosemantic features~\citep{cunningham2024, bricken2023, templeton2024, gao2024scaling}. This allows for the precise isolation of semantic concepts, facilitating automated circuit discovery and the tracking of representational grokking~\citep{conmy2023, nanda2023, wang2023}. 
+
+\subsection{Implicit Feedback and RL Context}
+To bypass the latency of offline retraining, we leverage implicit user feedback as an online correction mechanism. User interactions such as skipping top-ranked results to click on lower-ranked documents provide a natural, continuous reward signal~\citep{joachims2002, afsar2022}. Formulating the retrieval correction process as an Implicit Reinforcement Learning from Human Feedback (RLHF) objective~\citep{christiano2017} utilizes historical preference signals. However, the core premise of our methodology inherets the well-documented risks of click-driven feedback loops. User interactions are notoriously susceptible to position bias~\citep{craswell2008} and represent a highly localized, often flawed approximation of true relevance~\citep{joachims2017}. 
+
+From a broader societal perspective, training an autonomous agent to dynamically amplify or suppress semantic concepts based purely on interaction maximization introduces the risk of algorithmic reinforcement of societal biases~\citep{baeza-yates2018, noble2018}. If a demographic cohort exhibits a statistically significant click-preference toward ideologically biased results, an unconstrained PPO agent represents a classic instance of RLHF reward hacking~\citep{amodei2016, skalse2022, ouyang2022}.
+
+\subsection{Expanded Dataset Descriptions}
+SciDocs~\citep{cohan2020} evaluates direct citation prediction in scientific literature. ArguAna~\citep{wachsmuth2018} tests the model's ability to retrieve highly abstract counter-arguments. NFCorpus~\citep{boteva2016} provides a highly specialized medical vocabulary challenge. FiQA~\citep{maia2018} evaluates financial question answering, which heavily relies on precise numerical and domain-specific semantic mappings. Finally, TREC-COVID~\citep{voorhees2021} serves as a standard pandemic-era biomedical retrieval task.
+
+\subsection{Reproducibility and Source Code}
+To ensure reproducibility and facilitate further research, all datasets, splits, trained models, and experimental environments are made publicly accessible at: \url{https://anonymous.4open.science/r/IR-interpretability-RL-0632/}.
+
 \end{document}
