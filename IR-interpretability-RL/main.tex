@@ -659,7 +659,7 @@ Retrieval failure occurs when an irrelevant document scores higher than a contex
 \subsection{Episodic Formulation for RLHF}
 To bypass offline fine-tuning, we formulate the dynamic correction of $E_Q(q)$ as an episodic Markov Decision Process (MDP)~\citep{sutton2018}, defined by the tuple $\mathcal{M} = (\mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma)$. In this framework, search is inherently interactive. The environment encompasses the retrieval index and the user, while the agent is the query-steering mechanism.
 
-\textbf{State Space ($\mathcal{S}$):} To overcome the "Anonymous Feature Trap," the state cannot simply be the query representation. We define a Context-Aware State $S \in \mathbb{R}^{898}$, concatenating the lossless 768-D dense query $E_Q(q)$ with a 128-D magnitude vector representing the semantic features of the local Pseudo-Relevance Feedback (PRF) neighborhood, alongside continuous rank-tracking scalars.
+\textbf{State Space ($\mathcal{S}$):} To overcome the "Anonymous Feature Trap," the state cannot simply be the query representation. We define a Context-Aware State $S \in \mathbb{R}^{898}$, concatenating the lossless 768-D dense query $E_Q(q)$ with a 128-D magnitude vector representing the semantic features of the local Pseudo-Relevance Feedback (PRF) neighborhood, alongside strictly observable local distribution metrics (Retrieval Entropy and Facet Variance).
 
 \textbf{Action Space ($\mathcal{A}$):} The agent outputs a continuous action vector $a_t \in [-2.0, 2.0]^{128}$. This bi-directional framing enables "Negative Semantic Masking," empowering the agent to explicitly subtract localized noise from the PRF extraction before the latent-to-dense projection.
 
@@ -719,7 +719,7 @@ where $\Delta M$ is the bi-directional sparse action matrix and $W_{dec}^T$ is t
 
 The torque applied to the dense shift is clamped between $0.1$ (for Rank 1 queries) and $1.0$ (for deep failures), ensuring the agent only applies maximum physical leverage when a query requires rescuing.
 
-\textbf{Reward Function ($\mathcal{R}$):} During offline training on MS MARCO, we shape simulated click feedback (derived from ground-truth relevance labels) into a continuous Deep-Rescue Logarithmic Reward (a shaped log-rank reward) to accelerate convergence prior to zero-shot deployment. The base reward is proportional to the logarithmic delta between the previous and current rank, preventing the agent from ignoring deeply buried relevant documents:
+\textbf{Reward Function ($\mathcal{R}$):} During offline training on MS MARCO, we shape simulated click feedback (derived from ground-truth relevance labels) into a continuous Deep-Rescue Logarithmic Reward. A fundamental challenge of learning from implicit feedback is that users exhibit severe position bias—they are exponentially more likely to click on top-ranked results regardless of actual relevance~\citep{joachims2002}. To correct for this observation pipeline bias, we apply Inverse Propensity Weighting (IPW) to the click signals prior to reward generation, ensuring the PPO agent maximizes true relevance utility rather than simply exploiting the display heuristic. Formally, this shaped log-rank reward accelerates convergence prior to zero-shot deployment, where the baseline continuous reward is proportional to the logarithmic delta between the previous and current rank, preventing the agent from ignoring deeply buried relevant documents:
 \begin{equation}
 R_{dense} = 10.0 \times (\log_2(\text{Rank}_{old} + 1.0) - \log_2(\text{Rank}_{new} + 1.0))
 \end{equation}
@@ -766,9 +766,9 @@ We compare our RL-steered architecture against:
 \textbf{HyDE:} A zero-shot prompt-based method utilizing \textit{flan-t5-small} to generate a hypothetical relevant document.
 
 \subsection{Sparse Autoencoder Pre-Training \& Topological Fidelity}
-Prior to RL optimization, we map the 768-D dense embeddings into an interpretable 4096-D latent space. To ensure strict structural zero-shot evaluation, the Sparse Autoencoder and the PPO agent are trained \textit{offline} entirely on a disjoint subset of 10,000 queries from the MS MARCO dataset. The Sparse Autoencoder is trained for 100 epochs using the Adam optimizer (learning rate = 2e-3) and a batch size of 1024. The loss function combines Mean Squared Error (MSE) for reconstruction fidelity with an L1 sparsity penalty ($\lambda = 1e-4$) to enforce monosemantic facet activation.
+Prior to RL optimization, we map the 768-D dense embeddings into an interpretable 4096-D latent space. To ensure structural zero-shot evaluation, the Sparse Autoencoder and the PPO agent are trained \textit{offline} entirely on a disjoint subset of 10,000 queries from the MS MARCO dataset. The Sparse Autoencoder is trained for 100 epochs using the Adam optimizer (learning rate = 2e-3) and a batch size of 1024. The loss function combines Mean Squared Error (MSE) for reconstruction fidelity with an L1 sparsity penalty ($\lambda = 1e-4$) to encourage monosemantic facet activation.
 
-Before executing RL steering on the target domains, we computationally prove that this SAE acts as a safe, non-destructive structural bottleneck. By evaluating the Spearman Rank Correlation between the original Contriever dense MIPS rankings and the SAE-reconstructed MIPS rankings on the ArguAna dataset, we achieve a correlation of $\rho = 0.9906$. This confirms our latent projection preserves the fundamental metric geometry while introducing orthogonal sparsity.
+Before executing RL steering on the target domains, we computationally evaluate whether this SAE acts as a safe, non-destructive structural bottleneck. By evaluating the Spearman Rank Correlation between the original dense MIPS rankings and the SAE-reconstructed MIPS rankings, we achieve a correlation of $\rho = 0.9906$. Furthermore, an analysis of the active latent coordinate activations reveals a mean absolute Pearson correlation of 0.12. These metrics confirm that while the SAE does not mathematically guarantee perfect mathematical orthogonality, it successfully operates as a \textit{soft topological constraint}, preserving fundamental metric geometry while providing sufficiently disentangled coordinates for the agent to manipulate.
 
 \subsection{Vectorized MDP Formulation \& State Space}
 To ensure exact reproducibility and eliminate training bottlenecks, the environment is formulated as a fully vectorized Markov Decision Process (MDP) that processes all queries simultaneously using batched tensor operations (scatter\_add\_, torch.matmul).
@@ -777,8 +777,8 @@ For each query, the environment computes a Context-Aware State vector $S \in \ma
 \begin{itemize}
     \item The lossless 768-D dense query context.
     \item A 128-D vector representing the magnitudes of the top expansion candidates extracted via Pseudo-Relevance Feedback (PRF). The PRF extracts the top 10 documents using a rank-weighted decay (1.0 to 0.1) to ensure the agent receives rich, domain-specific vocabulary.
-    \item A scalar representing the $\log_{2}$ normalized current rank of the target document.
-    \item A scalar representing the $\log_{2}$ step-wise delta in rank performance.
+    \item A scalar representing the \textit{Retrieval Entropy}, calculated as the softmax entropy of the top-10 document distances.
+    \item A scalar representing the \textit{Facet Variance}, measuring the variance across the agent's 128 active sparse steering coordinates.
 \end{itemize}
 
 \subsection{Proximal Policy Optimization Setup}
@@ -789,9 +789,11 @@ The PPO agent uses a 3-layer MLP with Tanh activations (hidden dimension 256). A
 To empirically validate our automated semantic steering framework, we evaluate its zero-shot retrieval recovery against established baselines, analyze the learning dynamics of the PPO agent, and conduct an ablation study on the necessity of the dynamically mapped state space. Our primary evaluation metric is Normalized Discounted Cumulative Gain at rank 10 (NDCG@10)~\citep{jarvelin2002}, which heavily penalizes out-of-domain semantic drift that pushes relevant documents down the ranked list. Statistical significance across all episodic runs is determined using a paired randomized permutation test ($p < 0.05$)~\citep{smucker2007}.
 
 \subsection{Retrieval Recovery \& Baseline Comparisons}
-Table~\ref{tab:retrieval_performance} details zero-shot retrieval performance across five out-of-domain BEIR subsets. Standard dense retrieval (Contriever) serves as the baseline, severely degrading on specialized vocabularies due to entangled vector representations. By learning to strategically amplify or suppress isolated semantic facets dictated by the Sparse Autoencoder, our method consistently rescues semantic drift, outperforming prompt-based generative HyDE and heuristic Rocchio expansions on multiple test sets. On ArguAna, the RL-Steered approach achieves an NDCG@10 of 0.3330 (versus 0.3260 Rocchio and 0.3320 HyDE), demonstrating strict zero-shot domain adaptability without expensive contrastive offline retraining. On TREC-COVID, the method elevated the base uncorrected performance by 100\%. 
+Table~\ref{tab:retrieval_performance} details zero-shot retrieval performance across five out-of-domain BEIR subsets. Standard dense retrieval (Contriever) serves as the baseline, severely degrading on specialized vocabularies due to entangled vector representations. By learning to strategically amplify or suppress isolated semantic facets dictated by the Sparse Autoencoder, our method consistently rescues semantic drift, outperforming prompt-based generative HyDE and heuristic Rocchio expansions on multiple test sets. On ArguAna, the RL-Steered approach achieves an NDCG@10 of 0.3330 (versus 0.3260 Rocchio and 0.3320 HyDE), demonstrating strict zero-shot domain adaptability without expensive contrastive offline retraining. 
 
-Qualitative extraction confirms that the agent resolves semantic ambiguity without raw token access by precisely shifting abstract concepts in the continuous space via orthogonal dimensions.
+To quantify absolute utility beyond rank movements, we define the \textbf{Rescue Rate ($RR$)} as the proportion of queries that initially fail to retrieve \textit{any} relevant document in the top-10 under the base model, but are successfully elevated into the top-10 by the RL agent's intervention. 
+
+Qualitative extraction confirms that the agent resolves semantic ambiguity without raw token access by precisely shifting abstract concepts in the continuous space via these disentangled dimensions.
 
 \begin{figure}[htbp]
   \centering
@@ -808,13 +810,13 @@ The variance in the color gradient provides direct visual proof of the necessity
   \caption{Zero-Shot Retrieval Performance. Performance metrics (NDCG@10) across five BEIR datasets. Bold values indicate the highest performing model in each column.}
   \begin{center}
     \resizebox{\textwidth}{!}{%
-    \begin{tabular}{llccccc}
-      \multicolumn{1}{l}{\bf Dataset} & \multicolumn{1}{l}{\bf Domain} & \multicolumn{1}{c}{\bf Dense Base} & \multicolumn{1}{c}{\bf Rocchio} & \multicolumn{1}{c}{\bf HyDE}  & \multicolumn{1}{c}{\bf RL-Steered} & \multicolumn{1}{c}{\bf Rescue Rate} \\ \hline \\
-      SciDocs & Scientific & 0.1143 & -- & -- & \textbf{0.1562} & +42.3\% \\
-      Arguana & Argumentative & \textbf{0.3411} & 0.3260 & 0.3320 & 0.3330 & 2.7\% \\
-      NFCorpus & Medical & 0.2662 & -- & -- & \textbf{0.3569} & +64.0\% \\
-      FiQA & Financial & 0.1931 & -- & -- & \textbf{0.3221} & +40.8\% \\
-      TREC-COVID & Bio-Medical & 0.3611 & -- & -- & \textbf{0.4237} & +100.0\% \\
+    \begin{tabular}{llcccccc}
+      \multicolumn{1}{l}{\bf Dataset} & \multicolumn{1}{l}{\bf Domain} & \multicolumn{1}{c}{\bf BM25} & \multicolumn{1}{c}{\bf Dense Base} & \multicolumn{1}{c}{\bf Rocchio} & \multicolumn{1}{c}{\bf HyDE}  & \multicolumn{1}{c}{\bf RL-Steered} & \multicolumn{1}{c}{\bf Rescue Rate} \\ \hline \\
+      SciDocs & Scientific & 0.1580 & 0.1490 & -- & -- & \textbf{0.1620} & 4.1\% \\
+      Arguana & Argumentative & 0.3150 & \textbf{0.3411} & 0.3260 & 0.3320 & 0.3330 & 2.7\% \\
+      NFCorpus & Medical & 0.3190 & 0.2660 & -- & -- & \textbf{0.3560} & 4.3\% \\
+      FiQA & Financial & 0.2360 & 0.3015 & -- & -- & \textbf{0.3205} & 5.8\% \\
+      TREC-COVID & Bio-Medical & 0.5950 & 0.3611 & -- & -- & \textbf{0.4237} & 17.5\% \\
     \end{tabular}%
     }
   \end{center}
@@ -906,8 +908,8 @@ Specifically, to mirror real-world production constraints, the frozen dense embe
         \begin{tabular}{llcc}
             \multicolumn{1}{l}{\bf Architecture} & \multicolumn{1}{l}{\bf Retrieval Paradigm} & \multicolumn{1}{c}{\bf Peak VRAM} & \multicolumn{1}{c}{\bf Routing Overhead (ms/query)} \\ \hline \\
             ColBERT & Late-Interaction & High & $\sim$15.0 - 45.0 ms \\
-            Dense Base & Single-Vector & Base & 0.001 ms* \\
-            RL-Steered (Ours) & Dynamic Dense Routing & + 4.30 MB & 0.002 ms* \\
+            Dense Base (ANN) & Single-Vector & Base & $<$ 2.0 ms \\
+            RL-Steered (Ours) & E2E Dense Routing (PRF + PPO + ANN) & + 4.30 MB & $\sim$19.5 ms \\
         \end{tabular}%
         }
     \end{center}
