@@ -899,7 +899,6 @@ As depicted in the PPO Agent Learning Dynamics graph for Arguana (Figure~\ref{fi
       Rank-Proportional Torque (Static Torque) & 0.4248 & -0.0533 & -11.15\% \\
       Vanilla RL Baseline & 0.3277 & -0.1504 & -31.46\% \\
     \end{tabular}%
-        *\textit{Note:} Reported latency reflects isolated routing/forward-pass overhead, not end-to-end ANN fetch time.
     }
   \end{center}
   \label{tab:ablation}
@@ -938,8 +937,8 @@ We introduced a highly efficient Latent-to-Dense framework for correcting semant
 
 
 
+\appendix
 \section{Compute \& Hardware Efficiency}
-\subsection{Compute \& Hardware Efficiency}
 A primary contribution of this work is the circumvention of the "curse of computation" inherent to large-scale retrieval fine-tuning. Traditional semantic correction requires unfreezing the dense encoder and executing gradient updates over massive batches of mined hard negatives—a process demanding distributed GPU clusters.
 
 We explicitly designed our architecture to train an entire RL pipeline on a highly constrained, single consumer-grade GPU (24GB VRAM). To achieve this, we developed a strict VRAM management strategy within our PyTorch~\citep{paszke2019} implementation. We entirely decouple the dense LLM encoder from the RL environment loop. Prior to RL initialization, all corpus documents are embedded by the frozen dense model and indexed via FAISS~\citep{johnson2019}. 
@@ -960,8 +959,10 @@ As detailed in Table~\ref{tab:compute_efficiency}, this architectural decoupling
             Dense Base & Single-Vector & $\sim$110 M & Base & 0.001 ms* & 3,072 bytes \\
             RL-Steered (Ours) & Dynamic Dense Routing & + 6.56 M & + 4.30 MB & 0.002 ms* & 3,072 bytes \\
         \end{tabular}%
-        *\textit{Note:} Reported latency reflects isolated routing/forward-pass overhead, not end-to-end ANN fetch time.
         }
+        
+        \vspace{0.2cm}
+        {\footnotesize *\textit{Note:} Reported latency reflects isolated routing/forward-pass overhead, not end-to-end ANN fetch time.}
     \end{center}
     \label{tab:compute_efficiency}
 \end{table}
