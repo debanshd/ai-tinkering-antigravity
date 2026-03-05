@@ -570,7 +570,7 @@
 %      {rlj}           --> for submission
 %      [preprint]{rlj} --> to de-anonymize and remove references to RLJ/RLC
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage[accepted]{rlj} % Currently set to "submission" format for double-blind review
+\usepackage{rlj} % Currently set to "submission" format for double-blind review
 
 \usepackage{amssymb}
 \usepackage{mathtools}
@@ -886,13 +886,11 @@ We introduced a highly efficient Latent-to-Dense framework for correcting semant
 
 \clearpage
 
-\bibliographystyle{rlj}
 \bibliography{main}
+\bibliographystyle{rlj}
 
+\beginSupplementaryMaterials
 
-
-\clearpage
-\appendix
 \section{Compute \& Hardware Efficiency}
 \label{sec:appendix_compute}
 A primary contribution of this work is the circumvention of the "curse of computation" inherent to large-scale retrieval fine-tuning. Traditional semantic correction requires unfreezing the dense encoder and executing gradient updates over massive batches of mined hard negatives.
