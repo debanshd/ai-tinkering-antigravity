@@ -1,0 +1,119 @@
+[{"stream_name":"stderr","time":7.336612896,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":7.336668597,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":7.336675711,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":7.336680283,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stderr","time":7.994993888,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":7.99503053,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":7.995037047,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":7.995041812,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stdout","time":12.221463862,"data":"\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/77.4 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m77.4/77.4 kB\u001b[0m \u001b[31m3.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n"}
+,{"stream_name":"stdout","time":12.272481763,"data":"\u001b[?25h\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/304.8 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m304.8/304.8 kB\u001b[0m \u001b[31m10.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n"}
+,{"stream_name":"stderr","time":19.188899176,"data":"/usr/local/lib/python3.12/dist-packages/beir/util.py:11: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)\n"}
+,{"stream_name":"stderr","time":19.188959477,"data":"  from tqdm.autonotebook import tqdm\n"}
+,{"stream_name":"stderr","time":19.188968085,"data":"\n"}
+,{"stream_name":"stderr","time":19.188973611,"data":"/usr/local/lib/python3.12/dist-packages/beir/util.py:11: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)\n"}
+,{"stream_name":"stderr","time":19.188979456,"data":"  from tqdm.autonotebook import tqdm\n"}
+,{"stream_name":"stdout","time":41.502752574,"data":"\u001b[?25hUsing device: cuda\n"}
+,{"stream_name":"stdout","time":43.09689996,"data":"Loaded 8674 documents and 1406 queries.\n"}
+,{"stream_name":"stderr","time":43.248580014,"data":"No sentence-transformers model found with name facebook/contriever-msmarco. Creating a new one with mean pooling.\n"}
+,{"stream_name":"stderr","time":43.248615998,"data":"\n"}
+,{"stream_name":"stderr","time":43.248620986,"data":"No sentence-transformers model found with name facebook/contriever-msmarco. Creating a new one with mean pooling.\n"}
+,{"stream_name":"stdout","time":43.297491112,"data":"\n"}
+,{"stream_name":"stdout","time":43.297527733,"data":"--- Evaluating Dense Base (Contriever) ---\n"}
+,{"stream_name":"stderr","time":46.261544135,"data":"\u001b[1mBertModel LOAD REPORT\u001b[0m from: facebook/contriever-msmarco\n"}
+,{"stream_name":"stderr","time":46.261607293,"data":"Key                     | Status     |  | \n"}
+,{"stream_name":"stderr","time":46.261615449,"data":"------------------------+------------+--+-\n"}
+,{"stream_name":"stderr","time":46.261618872,"data":"embeddings.position_ids | UNEXPECTED |  | \n"}
+,{"stream_name":"stderr","time":46.261621653,"data":"\n"}
+,{"stream_name":"stderr","time":46.261624332,"data":"\u001b[3mNotes:\n"}
+,{"stream_name":"stderr","time":46.261632194,"data":"- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\n"}
+,{"stream_name":"stderr","time":46.261635392,"data":"\n"}
+,{"stream_name":"stderr","time":46.261637932,"data":"\u001b[1mBertModel LOAD REPORT\u001b[0m from: facebook/contriever-msmarco\n"}
+,{"stream_name":"stderr","time":46.261647926,"data":"Key                     | Status     |  | \n"}
+,{"stream_name":"stderr","time":46.261650732,"data":"------------------------+------------+--+-\n"}
+,{"stream_name":"stderr","time":46.261653396,"data":"embeddings.position_ids | UNEXPECTED |  | \n"}
+,{"stream_name":"stderr","time":46.261655983,"data":"\n"}
+,{"stream_name":"stderr","time":46.261658447,"data":"\u001b[3mNotes:\n"}
+,{"stream_name":"stderr","time":46.261661264,"data":"- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\n"}
+,{"stream_name":"stderr","time":46.580258566,"data":"Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.\n"}
+,{"stream_name":"stderr","time":46.580294325,"data":"\n"}
+,{"stream_name":"stderr","time":46.580298993,"data":"Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.\n"}
+,{"stream_name":"stdout","time":47.441885812,"data":"Encoding Corpus with Contriever...\n"}
+,{"stream_name":"stdout","time":122.175083693,"data":"Computing Base Scores...\n"}
+,{"stream_name":"stdout","time":131.31474154,"data":"Dense Base (Contriever) NDCG@10: 0.3595 | End-to-End Latency: 8.32 ms/query\n"}
+,{"stream_name":"stdout","time":131.645896494,"data":"\n"}
+,{"stream_name":"stdout","time":131.645968995,"data":"--- 1. True End-to-End Latency Profile ---\n"}
+,{"stream_name":"stderr","time":135.613653226,"data":"Traceback (most recent call last):\n"}
+,{"stream_name":"stderr","time":135.613688876,"data":"  File \"\u003cstring\u003e\", line 1, in \u003cmodule\u003e\n"}
+,{"stream_name":"stderr","time":135.613699192,"data":"  File \"/usr/local/lib/python3.12/dist-packages/papermill/execute.py\", line 131, in execute_notebook\n"}
+,{"stream_name":"stderr","time":135.613771394,"data":"    raise_for_execution_errors(nb, output_path)\n"}
+,{"stream_name":"stderr","time":135.613780366,"data":"  File \"/usr/local/lib/python3.12/dist-packages/papermill/execute.py\", line 251, in raise_for_execution_errors\n"}
+,{"stream_name":"stderr","time":135.613998766,"data":"    raise error\n"}
+,{"stream_name":"stderr","time":135.614464386,"data":"papermill.exceptions.PapermillExecutionError: \n"}
+,{"stream_name":"stderr","time":135.61447743,"data":"---------------------------------------------------------------------------\n"}
+,{"stream_name":"stderr","time":135.614483476,"data":"Exception encountered at \"In [6]\":\n"}
+,{"stream_name":"stderr","time":135.614491048,"data":"---------------------------------------------------------------------------\n"}
+,{"stream_name":"stderr","time":135.61449578,"data":"RuntimeError                              Traceback (most recent call last)\n"}
+,{"stream_name":"stderr","time":135.614499832,"data":"/tmp/ipykernel_25/2963922248.py in \u003ccell line: 0\u003e()\n"}
+,{"stream_name":"stderr","time":135.614514011,"data":"     36 t2 = time.time()\n"}
+,{"stream_name":"stderr","time":135.614518595,"data":"     37 state = state_enc(inference_batch, f_prf)\n"}
+,{"stream_name":"stderr","time":135.614524731,"data":"---\u003e 38 action_means, _ = dummy_agent(state)\n"}
+,{"stream_name":"stderr","time":135.614529661,"data":"     39 delta_M = torch.zeros_like(f_exp)\n"}
+,{"stream_name":"stderr","time":135.614534429,"data":"     40 delta_M.scatter_(1, active_idx, action_means)\n"}
+,{"stream_name":"stderr","time":135.614539155,"data":"\n"}
+,{"stream_name":"stderr","time":135.614544016,"data":"/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py in _wrapped_call_impl(self, *args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614548414,"data":"   1773             return self._compiled_call_impl(*args, **kwargs)  # type: ignore[misc]\n"}
+,{"stream_name":"stderr","time":135.614552568,"data":"   1774         else:\n"}
+,{"stream_name":"stderr","time":135.614556511,"data":"-\u003e 1775             return self._call_impl(*args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614560832,"data":"   1776 \n"}
+,{"stream_name":"stderr","time":135.614564726,"data":"   1777     # torchrec tests the code consistency with the following code\n"}
+,{"stream_name":"stderr","time":135.614568832,"data":"\n"}
+,{"stream_name":"stderr","time":135.614574697,"data":"/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py in _call_impl(self, *args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614578044,"data":"   1784                 or _global_backward_pre_hooks or _global_backward_hooks\n"}
+,{"stream_name":"stderr","time":135.614580921,"data":"   1785                 or _global_forward_hooks or _global_forward_pre_hooks):\n"}
+,{"stream_name":"stderr","time":135.614583687,"data":"-\u003e 1786             return forward_call(*args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614586455,"data":"   1787 \n"}
+,{"stream_name":"stderr","time":135.614589065,"data":"   1788         result = None\n"}
+,{"stream_name":"stderr","time":135.614591793,"data":"\n"}
+,{"stream_name":"stderr","time":135.614594408,"data":"/tmp/ipykernel_25/428121082.py in forward(self, x)\n"}
+,{"stream_name":"stderr","time":135.614597177,"data":"     24         nn.init.zeros_(self.linear.bias)\n"}
+,{"stream_name":"stderr","time":135.614599879,"data":"     25     def forward(self, x):\n"}
+,{"stream_name":"stderr","time":135.614602572,"data":"---\u003e 26         return torch.clamp(self.linear(x), -2.0, 2.0), None\n"}
+,{"stream_name":"stderr","time":135.614605349,"data":"     27 \n"}
+,{"stream_name":"stderr","time":135.614607937,"data":"\n"}
+,{"stream_name":"stderr","time":135.614610985,"data":"/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py in _wrapped_call_impl(self, *args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614617409,"data":"   1773             return self._compiled_call_impl(*args, **kwargs)  # type: ignore[misc]\n"}
+,{"stream_name":"stderr","time":135.614622186,"data":"   1774         else:\n"}
+,{"stream_name":"stderr","time":135.614627026,"data":"-\u003e 1775             return self._call_impl(*args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614631983,"data":"   1776 \n"}
+,{"stream_name":"stderr","time":135.614635773,"data":"   1777     # torchrec tests the code consistency with the following code\n"}
+,{"stream_name":"stderr","time":135.614640461,"data":"\n"}
+,{"stream_name":"stderr","time":135.614644927,"data":"/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py in _call_impl(self, *args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614653901,"data":"   1784                 or _global_backward_pre_hooks or _global_backward_hooks\n"}
+,{"stream_name":"stderr","time":135.614658158,"data":"   1785                 or _global_forward_hooks or _global_forward_pre_hooks):\n"}
+,{"stream_name":"stderr","time":135.61466211,"data":"-\u003e 1786             return forward_call(*args, **kwargs)\n"}
+,{"stream_name":"stderr","time":135.614666059,"data":"   1787 \n"}
+,{"stream_name":"stderr","time":135.614669797,"data":"   1788         result = None\n"}
+,{"stream_name":"stderr","time":135.614673754,"data":"\n"}
+,{"stream_name":"stderr","time":135.614677409,"data":"/usr/local/lib/python3.12/dist-packages/torch/nn/modules/linear.py in forward(self, input)\n"}
+,{"stream_name":"stderr","time":135.614681451,"data":"    132         Runs the forward pass.\n"}
+,{"stream_name":"stderr","time":135.614685406,"data":"    133         \"\"\"\n"}
+,{"stream_name":"stderr","time":135.614691491,"data":"--\u003e 134         return F.linear(input, self.weight, self.bias)\n"}
+,{"stream_name":"stderr","time":135.614695191,"data":"    135 \n"}
+,{"stream_name":"stderr","time":135.614697784,"data":"    136     def extra_repr(self) -\u003e str:\n"}
+,{"stream_name":"stderr","time":135.614700517,"data":"\n"}
+,{"stream_name":"stderr","time":135.614703514,"data":"RuntimeError: mat1 and mat2 shapes cannot be multiplied (100x768 and 4096x4096)\n"}
+,{"stream_name":"stderr","time":135.614706338,"data":"\n"}
+,{"stream_name":"stderr","time":138.057548878,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":138.057586579,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":138.234592004,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":138.234620795,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":138.83269792,"data":"/usr/local/lib/python3.12/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"remove_papermill_header.RemovePapermillHeader\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":138.832734044,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":138.862595289,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to notebook\n"}
+,{"stream_name":"stderr","time":139.242170955,"data":"[NbConvertApp] Writing 173906 bytes to __notebook__.ipynb\n"}
+,{"stream_name":"stderr","time":141.96116026,"data":"/usr/local/lib/python3.12/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"nbconvert.preprocessors.ExtractOutputPreprocessor\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":141.961219014,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":141.98615819,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to html\n"}
+,{"stream_name":"stderr","time":143.043252599,"data":"[NbConvertApp] Writing 470843 bytes to __results__.html\n"}
+]

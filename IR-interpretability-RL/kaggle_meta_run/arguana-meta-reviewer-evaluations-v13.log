@@ -1,0 +1,78 @@
+[{"stream_name":"stderr","time":6.047867612,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":6.047922385,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":6.047926637,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":6.047929101,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stderr","time":6.614913796,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":6.614944948,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":6.614949999,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":6.614954103,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stdout","time":10.085514764,"data":"\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/77.4 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m77.4/77.4 kB\u001b[0m \u001b[31m4.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n"}
+,{"stream_name":"stdout","time":10.085567096,"data":"\u001b[?25h\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/304.8 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m304.8/304.8 kB\u001b[0m \u001b[31m26.4 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n"}
+,{"stream_name":"stderr","time":15.919433979,"data":"/usr/local/lib/python3.12/dist-packages/beir/util.py:11: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)\n"}
+,{"stream_name":"stderr","time":15.919464135,"data":"  from tqdm.autonotebook import tqdm\n"}
+,{"stream_name":"stderr","time":15.919470151,"data":"\n"}
+,{"stream_name":"stderr","time":15.919475034,"data":"/usr/local/lib/python3.12/dist-packages/beir/util.py:11: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)\n"}
+,{"stream_name":"stderr","time":15.919480433,"data":"  from tqdm.autonotebook import tqdm\n"}
+,{"stream_name":"stdout","time":33.69863134,"data":"\u001b[?25hUsing device: cuda\n"}
+,{"stream_name":"stdout","time":42.956470446,"data":"Loaded 8674 documents and 1406 queries.\n"}
+,{"stream_name":"stdout","time":43.157130754,"data":"\n"}
+,{"stream_name":"stdout","time":43.157161987,"data":"--- Evaluating Dense Base (Contriever) ---\n"}
+,{"stream_name":"stderr","time":43.251465566,"data":"Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.\n"}
+,{"stream_name":"stderr","time":43.251485364,"data":"\n"}
+,{"stream_name":"stderr","time":43.251491207,"data":"Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.\n"}
+,{"stream_name":"stderr","time":43.252722794,"data":"No sentence-transformers model found with name facebook/contriever-msmarco. Creating a new one with mean pooling.\n"}
+,{"stream_name":"stderr","time":43.252753508,"data":"\n"}
+,{"stream_name":"stderr","time":43.25275884,"data":"No sentence-transformers model found with name facebook/contriever-msmarco. Creating a new one with mean pooling.\n"}
+,{"stream_name":"stderr","time":50.293068612,"data":"\u001b[1mBertModel LOAD REPORT\u001b[0m from: facebook/contriever-msmarco\n"}
+,{"stream_name":"stderr","time":50.29309914,"data":"Key                     | Status     |  | \n"}
+,{"stream_name":"stderr","time":50.293103495,"data":"------------------------+------------+--+-\n"}
+,{"stream_name":"stderr","time":50.293107668,"data":"embeddings.position_ids | UNEXPECTED |  | \n"}
+,{"stream_name":"stderr","time":50.293110301,"data":"\n"}
+,{"stream_name":"stderr","time":50.293112665,"data":"\u001b[3mNotes:\n"}
+,{"stream_name":"stderr","time":50.293115072,"data":"- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\n"}
+,{"stream_name":"stderr","time":50.293117779,"data":"\n"}
+,{"stream_name":"stderr","time":50.293120016,"data":"\u001b[1mBertModel LOAD REPORT\u001b[0m from: facebook/contriever-msmarco\n"}
+,{"stream_name":"stderr","time":50.293122417,"data":"Key                     | Status     |  | \n"}
+,{"stream_name":"stderr","time":50.293124616,"data":"------------------------+------------+--+-\n"}
+,{"stream_name":"stderr","time":50.293126802,"data":"embeddings.position_ids | UNEXPECTED |  | \n"}
+,{"stream_name":"stderr","time":50.293129612,"data":"\n"}
+,{"stream_name":"stderr","time":50.293132972,"data":"\u001b[3mNotes:\n"}
+,{"stream_name":"stderr","time":50.293137945,"data":"- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\n"}
+,{"stream_name":"stdout","time":53.12715172,"data":"Encoding Corpus with Contriever...\n"}
+,{"stream_name":"stdout","time":126.442867881,"data":"Computing Base Scores...\n"}
+,{"stream_name":"stdout","time":135.076098432,"data":"Dense Base (Contriever) NDCG@10: 0.3595 | End-to-End Latency: 8.16 ms/query\n"}
+,{"stream_name":"stdout","time":135.387073281,"data":"\n"}
+,{"stream_name":"stdout","time":135.387122273,"data":"--- 1. True End-to-End Latency Profile ---\n"}
+,{"stream_name":"stdout","time":135.4229184,"data":"Average per-query End-to-End Latency: 1.75 ms\n"}
+,{"stream_name":"stdout","time":135.422946857,"data":"Breakdown:\n"}
+,{"stream_name":"stdout","time":135.422952541,"data":"  First Retrieval PRF:  0.58 ms\n"}
+,{"stream_name":"stdout","time":135.422957208,"data":"  SAE Feature Struct:   0.45 ms\n"}
+,{"stream_name":"stdout","time":135.422963415,"data":"  RL Controller:        0.01 ms\n"}
+,{"stream_name":"stdout","time":135.42296804,"data":"  Second Retrieval:     0.72 ms\n"}
+,{"stream_name":"stdout","time":135.624785064,"data":"\n"}
+,{"stream_name":"stdout","time":135.624817703,"data":"--- 2. Counterfactual Rocchio (IPS Weighted) Baseline ---\n"}
+,{"stream_name":"stdout","time":143.913176906,"data":"Counterfactual Rocchio (IPS) NDCG@10: 0.3072\n"}
+,{"stream_name":"stdout","time":144.154898908,"data":"\n"}
+,{"stream_name":"stdout","time":144.154936484,"data":"--- 3. Topological Rank Stability Check ---\n"}
+,{"stream_name":"stdout","time":151.799802395,"data":"Found 1061 queries with top-10 baseline relevance.\n"}
+,{"stream_name":"stdout","time":157.371770178,"data":"Top-10 Rank Stability: 97.64% (1036/1061 maintained relevance in top-10 after steering)\n"}
+,{"stream_name":"stdout","time":157.371815957,"data":"[This isolates whether the torque heuristic prevents collateral damage on purely correct queries.]\n"}
+,{"stream_name":"stdout","time":157.41230515,"data":"\n"}
+,{"stream_name":"stdout","time":157.412334949,"data":"--- 4. SAE Feature Orthogonality (Cross-Correlation) ---\n"}
+,{"stream_name":"stdout","time":157.412340996,"data":"Computing pairwise cosine similarities for all 4096 decoder vectors...\n"}
+,{"stream_name":"stdout","time":157.412346212,"data":"Mean Off-Diagonal Feature Cosine Similarity: 0.0288\n"}
+,{"stream_name":"stdout","time":157.412351144,"data":"Max Off-Diagonal Feature Cosine Similarity: 0.1669\n"}
+,{"stream_name":"stdout","time":157.412355901,"data":"[This proves the structural relative independence assumption of the Negative Masking operation.]\n"}
+,{"stream_name":"stderr","time":162.349770327,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":162.349799908,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":162.491860463,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":162.491886199,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":163.282971416,"data":"/usr/local/lib/python3.12/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"remove_papermill_header.RemovePapermillHeader\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":163.283010341,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":163.311419032,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to notebook\n"}
+,{"stream_name":"stderr","time":163.643648809,"data":"[NbConvertApp] Writing 167014 bytes to __notebook__.ipynb\n"}
+,{"stream_name":"stderr","time":165.948288722,"data":"/usr/local/lib/python3.12/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"nbconvert.preprocessors.ExtractOutputPreprocessor\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":165.948330332,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":165.970164291,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to html\n"}
+,{"stream_name":"stderr","time":166.898182531,"data":"[NbConvertApp] Writing 463533 bytes to __results__.html\n"}
+]

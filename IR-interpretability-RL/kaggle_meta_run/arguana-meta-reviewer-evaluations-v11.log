@@ -1,0 +1,75 @@
+[{"stream_name":"stderr","time":6.845248379,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":6.845298066,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":6.845305327,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":6.845308988,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stderr","time":7.491096762,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":7.491133262,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":7.49113879,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":7.491142753,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stdout","time":11.511520531,"data":"\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/77.4 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m77.4/77.4 kB\u001b[0m \u001b[31m3.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n"}
+,{"stream_name":"stdout","time":11.562363635,"data":"\u001b[?25h\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/304.8 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m304.8/304.8 kB\u001b[0m \u001b[31m16.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n"}
+,{"stream_name":"stderr","time":18.281060473,"data":"/usr/local/lib/python3.12/dist-packages/beir/util.py:11: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)\n"}
+,{"stream_name":"stderr","time":18.28109952,"data":"  from tqdm.autonotebook import tqdm\n"}
+,{"stream_name":"stderr","time":18.281105514,"data":"\n"}
+,{"stream_name":"stderr","time":18.281112236,"data":"/usr/local/lib/python3.12/dist-packages/beir/util.py:11: TqdmExperimentalWarning: Using `tqdm.autonotebook.tqdm` in notebook mode. Use `tqdm.tqdm` instead to force console mode (e.g. in jupyter console)\n"}
+,{"stream_name":"stderr","time":18.281116634,"data":"  from tqdm.autonotebook import tqdm\n"}
+,{"stream_name":"stdout","time":38.416503543,"data":"\u001b[?25hUsing device: cuda\n"}
+,{"stream_name":"stdout","time":40.362316298,"data":"Loaded 8674 documents and 1406 queries.\n"}
+,{"stream_name":"stderr","time":40.549842087,"data":"No sentence-transformers model found with name facebook/contriever-msmarco. Creating a new one with mean pooling.\n"}
+,{"stream_name":"stderr","time":40.549870691,"data":"\n"}
+,{"stream_name":"stderr","time":40.549886028,"data":"No sentence-transformers model found with name facebook/contriever-msmarco. Creating a new one with mean pooling.\n"}
+,{"stream_name":"stdout","time":40.562693251,"data":"\n"}
+,{"stream_name":"stdout","time":40.562730676,"data":"--- Evaluating Dense Base (Contriever) ---\n"}
+,{"stream_name":"stderr","time":44.190579571,"data":"\u001b[1mBertModel LOAD REPORT\u001b[0m from: facebook/contriever-msmarco\n"}
+,{"stream_name":"stderr","time":44.190639764,"data":"Key                     | Status     |  | \n"}
+,{"stream_name":"stderr","time":44.190643938,"data":"------------------------+------------+--+-\n"}
+,{"stream_name":"stderr","time":44.190646282,"data":"embeddings.position_ids | UNEXPECTED |  | \n"}
+,{"stream_name":"stderr","time":44.190648547,"data":"\n"}
+,{"stream_name":"stderr","time":44.190650857,"data":"\u001b[3mNotes:\n"}
+,{"stream_name":"stderr","time":44.190653339,"data":"- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\n"}
+,{"stream_name":"stderr","time":44.190656055,"data":"\n"}
+,{"stream_name":"stderr","time":44.190658194,"data":"\u001b[1mBertModel LOAD REPORT\u001b[0m from: facebook/contriever-msmarco\n"}
+,{"stream_name":"stderr","time":44.190660661,"data":"Key                     | Status     |  | \n"}
+,{"stream_name":"stderr","time":44.190662877,"data":"------------------------+------------+--+-\n"}
+,{"stream_name":"stderr","time":44.190665137,"data":"embeddings.position_ids | UNEXPECTED |  | \n"}
+,{"stream_name":"stderr","time":44.190667347,"data":"\n"}
+,{"stream_name":"stderr","time":44.190669552,"data":"\u001b[3mNotes:\n"}
+,{"stream_name":"stderr","time":44.190672087,"data":"- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\n"}
+,{"stream_name":"stdout","time":45.836759011,"data":"Encoding Corpus with Contriever...\n"}
+,{"stream_name":"stdout","time":119.245277836,"data":"Computing Base Scores...\n"}
+,{"stream_name":"stdout","time":128.058418172,"data":"Dense Base (Contriever) NDCG@10: 0.3595 | End-to-End Latency: 8.15 ms/query\n"}
+,{"stream_name":"stdout","time":128.3911325,"data":"\n"}
+,{"stream_name":"stdout","time":128.39117439,"data":"--- 1. True End-to-End Latency Profile ---\n"}
+,{"stream_name":"stderr","time":132.112737676,"data":"Traceback (most recent call last):\n"}
+,{"stream_name":"stderr","time":132.112769472,"data":"  File \"\u003cstring\u003e\", line 1, in \u003cmodule\u003e\n"}
+,{"stream_name":"stderr","time":132.112777102,"data":"  File \"/usr/local/lib/python3.12/dist-packages/papermill/execute.py\", line 131, in execute_notebook\n"}
+,{"stream_name":"stderr","time":132.112896386,"data":"    raise_for_execution_errors(nb, output_path)\n"}
+,{"stream_name":"stderr","time":132.112928745,"data":"  File \"/usr/local/lib/python3.12/dist-packages/papermill/execute.py\", line 251, in raise_for_execution_errors\n"}
+,{"stream_name":"stderr","time":132.11318685,"data":"    raise error\n"}
+,{"stream_name":"stderr","time":132.113495798,"data":"papermill.exceptions.PapermillExecutionError: \n"}
+,{"stream_name":"stderr","time":132.113504731,"data":"---------------------------------------------------------------------------\n"}
+,{"stream_name":"stderr","time":132.113509945,"data":"Exception encountered at \"In [6]\":\n"}
+,{"stream_name":"stderr","time":132.113514891,"data":"---------------------------------------------------------------------------\n"}
+,{"stream_name":"stderr","time":132.113520676,"data":"RuntimeError                              Traceback (most recent call last)\n"}
+,{"stream_name":"stderr","time":132.113526709,"data":"/tmp/ipykernel_24/3139439555.py in \u003ccell line: 0\u003e()\n"}
+,{"stream_name":"stderr","time":132.113533037,"data":"     52 \n"}
+,{"stream_name":"stderr","time":132.113538307,"data":"     53 q_new = F.normalize(inference_batch + torque * dense_shift, p=2, dim=1)\n"}
+,{"stream_name":"stderr","time":132.11354325,"data":"---\u003e 54 second_pass_scores = torch.matmul(q_new, doc_embs.T)\n"}
+,{"stream_name":"stderr","time":132.113559582,"data":"     55 if torch.cuda.is_available(): torch.cuda.synchronize()\n"}
+,{"stream_name":"stderr","time":132.113563541,"data":"     56 t_retrieval2 = time.time() - t3\n"}
+,{"stream_name":"stderr","time":132.113567093,"data":"\n"}
+,{"stream_name":"stderr","time":132.113571748,"data":"RuntimeError: Inference tensors cannot be saved for backward. Please do not use Tensors created in inference mode in computation tracked by autograd. To work around this, you can make a clone to get a normal tensor and use it in autograd, or use `torch.no_grad()` instead of `torch.inference_mode()`.\n"}
+,{"stream_name":"stderr","time":132.113577187,"data":"\n"}
+,{"stream_name":"stderr","time":134.531119868,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":134.531162076,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":134.688474579,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":134.688505165,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":135.28628464,"data":"/usr/local/lib/python3.12/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"remove_papermill_header.RemovePapermillHeader\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":135.286322051,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":135.314545477,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to notebook\n"}
+,{"stream_name":"stderr","time":135.68672036,"data":"[NbConvertApp] Writing 167213 bytes to __notebook__.ipynb\n"}
+,{"stream_name":"stderr","time":138.374958779,"data":"/usr/local/lib/python3.12/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"nbconvert.preprocessors.ExtractOutputPreprocessor\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":138.375000835,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":138.398090346,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to html\n"}
+,{"stream_name":"stderr","time":139.403583168,"data":"[NbConvertApp] Writing 463807 bytes to __results__.html\n"}
+]

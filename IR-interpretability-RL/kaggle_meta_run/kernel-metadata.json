@@ -1,0 +1,15 @@
+{
+  "id": "dasdebanshu/arguana-meta-eval-v13",
+  "title": "ArguAna Meta Reviewer Evaluations V13",
+  "code_file": "run_meta_experiments_kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "dasdebanshu/arguana-checkpoints"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

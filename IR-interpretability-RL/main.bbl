@@ -1,4 +1,4 @@
-\begin{thebibliography}{70}
+\begin{thebibliography}{73}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -15,6 +15,24 @@ M.~M. Afsar, T.~Crump, and B.~Far.
 Dario Amodei et~al.
 \newblock Concrete problems in ai safety.
 \newblock \emph{arXiv preprint arXiv:1606.06565}, 2016.
+
+\bibitem[Anonymous(2022)]{2204.00718}
+Anonymous.
+\newblock Offline reinforcement learning from user interactions in information
+  retrieval: A study on counterfactual rocchio.
+\newblock \emph{arXiv preprint arXiv:2204.00718}, 2022.
+
+\bibitem[Anonymous(2025{\natexlab{a}})]{2503.14887}
+Anonymous.
+\newblock Promptprf: Adapting dense retrievers via prompting with
+  pseudo-relevance feedback.
+\newblock \emph{arXiv preprint arXiv:2503.14887}, 2025{\natexlab{a}}.
+
+\bibitem[Anonymous(2025{\natexlab{b}})]{2504.01448}
+Anonymous.
+\newblock Llm-vprf: Zero-shot dense retrieval through llm-guided virtual pseudo
+  relevence feedback.
+\newblock \emph{arXiv preprint arXiv:2504.01448}, 2025{\natexlab{b}}.
 
 \bibitem[Baeza-Yates(2018)]{baeza-yates2018}
 Ricardo Baeza-Yates.

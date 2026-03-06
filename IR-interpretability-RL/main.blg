@@ -3,44 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: rlj.bst
 Database file #1: main.bib
-You've used 70 entries,
+You've used 73 entries,
             2773 wiz_defined-function locations,
-            882 strings with 15246 characters,
-and the built_in function-call counts, 26959 in all, are:
-= -- 2221
-> -- 1569
-< -- 57
-+ -- 542
-- -- 471
-* -- 1703
-:= -- 4229
-add.period$ -- 210
-call.type$ -- 70
-change.case$ -- 321
-chr.to.int$ -- 69
-cite$ -- 140
-duplicate$ -- 1506
-empty$ -- 2526
-format.name$ -- 602
-if$ -- 5762
-int.to.chr$ -- 2
+            892 strings with 15660 characters,
+and the built_in function-call counts, 27857 in all, are:
+= -- 2299
+> -- 1599
+< -- 60
++ -- 555
+- -- 480
+* -- 1752
+:= -- 4376
+add.period$ -- 219
+call.type$ -- 73
+change.case$ -- 333
+chr.to.int$ -- 71
+cite$ -- 146
+duplicate$ -- 1563
+empty$ -- 2616
+format.name$ -- 614
+if$ -- 5948
+int.to.chr$ -- 3
 int.to.str$ -- 1
-missing$ -- 72
-newline$ -- 358
-num.names$ -- 280
-pop$ -- 849
+missing$ -- 75
+newline$ -- 373
+num.names$ -- 292
+pop$ -- 876
 preamble$ -- 1
-purify$ -- 253
+purify$ -- 262
 quote$ -- 0
-skip$ -- 1054
+skip$ -- 1090
 stack$ -- 0
-substring$ -- 159
-swap$ -- 112
+substring$ -- 165
+swap$ -- 117
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 760
+type$ -- 793
 warning$ -- 0
-while$ -- 212
+while$ -- 221
 width$ -- 0
-write$ -- 848
+write$ -- 884
