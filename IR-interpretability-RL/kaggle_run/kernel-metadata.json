@@ -1,0 +1,17 @@
+{
+  "id": "dasdebanshu/arguana-full-beir-eval-v5",
+  "title": "ArguAna Full BEIR Eval v5",
+  "code_file": "run_experiments_kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": [
+    "dasdebanshu/arguana-checkpoints"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

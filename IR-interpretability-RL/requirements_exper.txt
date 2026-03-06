@@ -1,0 +1,9 @@
+beir
+sentence-transformers
+transformers
+torch
+numpy
+scipy
+tqdm
+rank_bm25
+accelerate

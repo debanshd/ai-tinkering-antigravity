@@ -1,0 +1,431 @@
+\begin{thebibliography}{70}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{DOI: #1}\else
+  \providecommand{\doi}{DOI: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Afsar et~al.(2022)Afsar, Crump, and Far]{afsar2022}
+M.~M. Afsar, T.~Crump, and B.~Far.
+\newblock Reinforcement learning for search, recommendation, and online
+  advertising: A survey.
+\newblock \emph{ACM Computing Surveys}, 2022.
+
+\bibitem[Amodei et~al.(2016)]{amodei2016}
+Dario Amodei et~al.
+\newblock Concrete problems in ai safety.
+\newblock \emph{arXiv preprint arXiv:1606.06565}, 2016.
+
+\bibitem[Baeza-Yates(2018)]{baeza-yates2018}
+Ricardo Baeza-Yates.
+\newblock Bias on the web.
+\newblock \emph{Communications of the ACM}, 2018.
+
+\bibitem[Beyer et~al.(1999)]{beyer1999}
+Kevin Beyer et~al.
+\newblock When is 'nearest neighbor' meaningful?
+\newblock In \emph{International Conference on Database Theory}, 1999.
+
+\bibitem[Boteva et~al.(2016)]{boteva2016}
+Vera Boteva et~al.
+\newblock A full-text learning to rank dataset for medical information
+  retrieval.
+\newblock In \emph{Advances in Information Retrieval}, 2016.
+
+\bibitem[Bricken et~al.(2023)]{bricken2023}
+Trenton Bricken et~al.
+\newblock Towards monosemanticity: Decomposing language models with dictionary
+  learning.
+\newblock \emph{Transformer Circuits Thread}, 2023.
+
+\bibitem[Broder et~al.(2003)]{broder2003}
+Andrei~Z. Broder et~al.
+\newblock Efficient query evaluation using a two-level retrieval process.
+\newblock In \emph{Proceedings of the twelfth international conference on
+  Information and knowledge management (CIKM)}, 2003.
+
+\bibitem[Christiano et~al.(2017)]{christiano2017}
+Paul~F. Christiano et~al.
+\newblock Deep reinforcement learning from human preferences.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2017.
+
+\bibitem[Chuklin et~al.(2015)Chuklin, Markov, de~Rijke, et~al.]{wang2016}
+Aleksandr Chuklin, Ilya Markov, Maarten de~Rijke, et~al.
+\newblock An overview of click models for web search.
+\newblock \emph{Synthesis Lectures on Information Concepts, Retrieval, and
+  Services}, 7\penalty0 (4):\penalty0 1--115, 2015.
+
+\bibitem[Cohan et~al.(2020)]{cohan2020}
+Arman Cohan et~al.
+\newblock Specter: Document-level representation learning using
+  citation-informed transformers.
+\newblock In \emph{Proceedings of the 58th Annual Meeting of the Association
+  for Computational Linguistics}, 2020.
+
+\bibitem[Conmy et~al.(2023)]{conmy2023}
+Arthur Conmy et~al.
+\newblock Towards automated circuit discovery for mechanistic interpretability.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2023.
+
+\bibitem[Craswell et~al.(2008)]{craswell2008}
+Nick Craswell et~al.
+\newblock An experimental comparison of click position-bias models.
+\newblock In \emph{Proceedings of the 2008 international conference on web
+  search and data mining}, 2008.
+
+\bibitem[Cunningham et~al.(2024)]{cunningham2024}
+Hoagy Cunningham et~al.
+\newblock Sparse autoencoders find highly interpretable features in language
+  models.
+\newblock In \emph{Proceedings of the International Conference on Learning
+  Representations (ICLR)}, 2024.
+
+\bibitem[Dai \& Callan(2019)Dai and Callan]{dai2019}
+Zhuyun Dai and Jamie Callan.
+\newblock Context-aware sentence/passage term importance estimation for first
+  stage retrieval.
+\newblock \emph{arXiv preprint arXiv:1910.10687}, 2019.
+
+\bibitem[Elhage et~al.(2022)]{elhage2022}
+Nelson Elhage et~al.
+\newblock Toy models of superposition.
+\newblock \emph{arXiv preprint arXiv:2209.10652}, 2022.
+
+\bibitem[Engstrom et~al.(2020)Engstrom, Ilyas, Santurkar, Tsipras, Janoos,
+  Rudolph, and Madry]{engstrom2020}
+I.~Engstrom, A.~Ilyas, S.~Santurkar, D.~Tsipras, F.~Janoos, L.~Rudolph, and
+  A.~Madry.
+\newblock Implementation matters in deep policy gradients: A case study on ppo
+  and trpo.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2020.
+
+\bibitem[Ethayarajh(2019)]{ethayarajh2019}
+Kawin Ethayarajh.
+\newblock How contextual are contextualized word representations?
+\newblock In \emph{Proceedings of the 2019 Conference on Empirical Methods in
+  Natural Language Processing}, 2019.
+
+\bibitem[Formal et~al.(2021{\natexlab{a}})Formal, Piwowarski, and
+  Clinchant]{formal2021splade}
+Thibault Formal, Benjamin Piwowarski, and Stephane Clinchant.
+\newblock Splade: Sparse lexical and expansion model for first stage ranking.
+\newblock In \emph{Proceedings of the 44th International ACM SIGIR Conference},
+  2021{\natexlab{a}}.
+
+\bibitem[Formal et~al.(2021{\natexlab{b}})]{formal2021spladev2}
+Thibault Formal et~al.
+\newblock Splade v2: Sparse lexical and expansion model for information
+  retrieval.
+\newblock \emph{arXiv preprint arXiv:2109.10086}, 2021{\natexlab{b}}.
+
+\bibitem[Gao et~al.(2024)]{gao2024scaling}
+Leo Gao et~al.
+\newblock Scaling and evaluating sparse autoencoders.
+\newblock \emph{arXiv preprint arXiv:2407.14956}, 2024.
+
+\bibitem[Gao et~al.(2021)Gao, Callan, and Dai]{gao2021coil}
+Luyu Gao, Jamie Callan, and Zhuyun Dai.
+\newblock Coil: Revisit exact lexical match in information retrieval with
+  contextualized inverted list.
+\newblock In \emph{Proceedings of the 2021 Conference of the North American
+  Chapter of the Association for Computational Linguistics}, 2021.
+
+\bibitem[Glorot et~al.(2011)Glorot, Bordes, and Bengio]{glorot2011}
+Xavier Glorot, Antoine Bordes, and Yoshua Bengio.
+\newblock Deep sparse rectifier neural networks.
+\newblock In \emph{Proceedings of the Fourteenth International Conference on
+  Artificial Intelligence and Statistics}, 2011.
+
+\bibitem[Hofmann et~al.(2013)Hofmann, Whiteson, and de~Rijke]{hofmann2013}
+Katja Hofmann, Shimon Whiteson, and Maarten de~Rijke.
+\newblock Balancing exploration and exploitation in listwise and pairwise
+  learning to rank for information retrieval.
+\newblock \emph{Information Retrieval}, 2013.
+
+\bibitem[Hofst\"{a}tter et~al.(2021)]{hofstatter2021}
+Sebastian Hofst\"{a}tter et~al.
+\newblock Efficiently teaching an effective dense retriever with balanced topic
+  aware sampling.
+\newblock In \emph{Proceedings of the 44th International ACM SIGIR Conference},
+  2021.
+
+\bibitem[Izacard et~al.(2022)]{izacard2022}
+Gautier Izacard et~al.
+\newblock Unsupervised dense information retrieval with contrastive learning.
+\newblock \emph{Transactions on Machine Learning Research (TMLR)}, 2022.
+
+\bibitem[J{\"a}rvelin \& Kek{\"a}l{\"a}inen(2002)J{\"a}rvelin and
+  Kek{\"a}l{\"a}inen]{jarvelin2002}
+Kalervo J{\"a}rvelin and Jaana Kek{\"a}l{\"a}inen.
+\newblock Cumulated gain-based evaluation of ir techniques.
+\newblock \emph{ACM Transactions on Information Systems (TOIS)}, 2002.
+
+\bibitem[Joachims(2002)]{joachims2002}
+Thorsten Joachims.
+\newblock Optimizing search engines using clickthrough data.
+\newblock In \emph{Proceedings of the eighth ACM SIGKDD international
+  conference on Knowledge discovery and data mining}, 2002.
+
+\bibitem[Joachims et~al.(2017)]{joachims2017}
+Thorsten Joachims et~al.
+\newblock Unbiased learning-to-rank with biased feedback.
+\newblock In \emph{Proceedings of the Tenth ACM International Conference on Web
+  Search and Data Mining (WSDM)}, 2017.
+
+\bibitem[Johnson et~al.(2019)Johnson, Douze, and J{\'e}gou]{johnson2019}
+Jeff Johnson, Matthijs Douze, and Herv{\'e} J{\'e}gou.
+\newblock Billion-scale similarity search with gpus.
+\newblock \emph{IEEE Transactions on Big Data}, 2019.
+
+\bibitem[Karpukhin et~al.(2020)]{karpukhin2020}
+Vladimir Karpukhin et~al.
+\newblock Dense passage retrieval for open-domain question answering.
+\newblock In \emph{Proceedings of the 2020 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}, 2020.
+
+\bibitem[Khattab \& Zaharia(2020)Khattab and Zaharia]{khattab2020}
+Omar Khattab and Matei Zaharia.
+\newblock Colbert: Efficient and effective passage search via contextualized
+  late interaction over bert.
+\newblock In \emph{Proceedings of the 43rd International ACM SIGIR Conference},
+  2020.
+
+\bibitem[Konda \& Tsitsiklis(1999)Konda and Tsitsiklis]{konda1999}
+Vijay~R. Konda and John~N. Tsitsiklis.
+\newblock Actor-critic algorithms.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 1999.
+
+\bibitem[Lee et~al.(2023)]{lee2023}
+Joonho Lee et~al.
+\newblock Polysemanticity and capacity in neural networks.
+\newblock \emph{arXiv preprint arXiv:2308.11896}, 2023.
+
+\bibitem[Lillicrap et~al.(2016)]{lillicrap2016}
+Timothy~P. Lillicrap et~al.
+\newblock Continuous control with deep reinforcement learning.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2016.
+
+\bibitem[Lin et~al.(2021)Lin, Nogueira, and Yates]{lin2021}
+Jimmy Lin, Rodrigo Nogueira, and Andrew Yates.
+\newblock Pretrained transformers for text ranking: Bert and beyond.
+\newblock \emph{Synthesis Lectures on Human Language Technologies}, 2021.
+
+\bibitem[Liu et~al.(2025)]{liu2025clsr}
+Zheng Liu et~al.
+\newblock Cl-sr: Sparse interpretable indexing schemes from sae features.
+\newblock \emph{arXiv preprint arXiv:2506.00041}, 2025.
+
+\bibitem[Luan et~al.(2021)]{luan2021}
+Yi~Luan et~al.
+\newblock Sparse, dense, and attentional representations for text retrieval.
+\newblock \emph{Transactions of the Association for Computational Linguistics},
+  2021.
+
+\bibitem[Macdonald et~al.(2012)Macdonald, Tonellotto, and Ounis]{macdonald2012}
+Craig Macdonald, Nicola Tonellotto, and Iadh Ounis.
+\newblock Learning to predict response times for online query scheduling.
+\newblock In \emph{Proceedings of the 35th International ACM SIGIR Conference},
+  2012.
+
+\bibitem[Maia et~al.(2018)]{maia2018}
+Macedo Maia et~al.
+\newblock 18th international conference on web engineering (icwe 2018) www'18
+  companion: Finqa.
+\newblock In \emph{Companion Proceedings of the The Web Conference 2018}, 2018.
+
+\bibitem[Makelov et~al.(2024)]{makelov2024}
+Ivan Makelov et~al.
+\newblock Sae steering in embeddings: precise semantic edits in retrieval.
+\newblock \emph{arXiv preprint arXiv:2408.00657}, 2024.
+
+\bibitem[Meng et~al.(2022)]{meng2022}
+Kevin Meng et~al.
+\newblock Locating and editing factual associations in gpt.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2022.
+
+\bibitem[Nanda et~al.(2023)]{nanda2023}
+Neel Nanda et~al.
+\newblock Progress measures for grokking via mechanistic interpretability.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2023.
+
+\bibitem[Noble(2018)]{noble2018}
+Safiya~Umoja Noble.
+\newblock \emph{Algorithms of Oppression: How Search Engines Reinforce Racism}.
+\newblock NYU Press, 2018.
+
+\bibitem[Nogueira \& Cho(2017)Nogueira and Cho]{nogueira2017}
+Rodrigo Nogueira and Kyunghyun Cho.
+\newblock Task-oriented query reformulation with reinforcement learning.
+\newblock In \emph{Proceedings of the 2017 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}, 2017.
+
+\bibitem[Nogueira \& Lin(2019)Nogueira and Lin]{nogueira2019}
+Rodrigo Nogueira and Jimmy Lin.
+\newblock From doc2query to doctquery.
+\newblock \emph{arXiv preprint arXiv:1904.08375}, 2019.
+
+\bibitem[Olah et~al.(2020)]{olah2020}
+Chris Olah et~al.
+\newblock Zoom in: An introduction to circuits.
+\newblock \emph{Distill}, 2020.
+
+\bibitem[Olshausen \& Field(1996)Olshausen and Field]{olshausen1996}
+Bruno~A. Olshausen and David~J. Field.
+\newblock Emergence of simple-cell receptive field properties by learning a
+  sparse code for natural images.
+\newblock \emph{Nature}, 1996.
+
+\bibitem[Ouyang et~al.(2022)]{ouyang2022}
+Long Ouyang et~al.
+\newblock Training language models to follow instructions with human feedback.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2022.
+
+\bibitem[Ouyang et~al.(2021)]{ouyang2021}
+Shiyao Ouyang et~al.
+\newblock Minimizing user effort in recommender systems with reinforcement
+  learning.
+\newblock In \emph{Proceedings of the 27th ACM SIGKDD Conference}, 2021.
+
+\bibitem[Qu et~al.(2021)]{qu2021}
+Yingqi Qu et~al.
+\newblock Rocketqa: An optimized training approach to dense passage retrieval
+  for open-domain question answering.
+\newblock In \emph{Proceedings of the 2021 Conference of the North American
+  Chapter of the Association for Computational Linguistics}, 2021.
+
+\bibitem[Robertson et~al.(1994)]{robertson1994}
+Stephen~E. Robertson et~al.
+\newblock Okapi at trec-3.
+\newblock In \emph{Proceedings of the Third Text REtrieval Conference
+  (TREC-3)}, 1994.
+
+\bibitem[Santhanam et~al.(2022)]{santhanam2022}
+Keshav Santhanam et~al.
+\newblock Colbertv2: Effective and efficient retrieval via lightweight late
+  interaction.
+\newblock In \emph{Proceedings of the 2022 Conference of the North American
+  Chapter of the Association for Computational Linguistics}, 2022.
+
+\bibitem[Schulman et~al.(2016)Schulman, Moritz, Levine, Jordan, and
+  Abbeel]{schulman2016}
+John Schulman, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter
+  Abbeel.
+\newblock High-dimensional continuous control using generalized advantage
+  estimation.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2016.
+
+\bibitem[Schulman et~al.(2017)Schulman, Wolski, Dhariwal, Radford, and
+  Klimov]{schulman2017}
+John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+\newblock Proximal policy optimization algorithms.
+\newblock \emph{arXiv preprint arXiv:1707.06347}, 2017.
+
+\bibitem[Shrivastava \& Li(2014)Shrivastava and Li]{shrivastava2014}
+Anshumali Shrivastava and Ping Li.
+\newblock Asymmetric lsh (alsh) for sublinear time maximum inner product search
+  (mips).
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2014.
+
+\bibitem[Skalse et~al.(2022)]{skalse2022}
+Joar Skalse et~al.
+\newblock Defining and characterizing reward gaming.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2022.
+
+\bibitem[Smucker et~al.(2007)Smucker, Allan, and Carterette]{smucker2007}
+Mark~D. Smucker, James Allan, and Ben Carterette.
+\newblock A comparison of statistical significance tests for information
+  retrieval evaluation.
+\newblock In \emph{Proceedings of the 16th ACM conference on Conference on
+  information and knowledge management}, 2007.
+
+\bibitem[Sutton \& Barto(2018)Sutton and Barto]{sutton2018}
+Richard~S. Sutton and Andrew~G. Barto.
+\newblock \emph{Reinforcement Learning: An Introduction}.
+\newblock MIT Press, 2018.
+
+\bibitem[Templeton et~al.(2024)]{templeton2024}
+Adly Templeton et~al.
+\newblock Scaling monosemanticity: Extracting interpretable features from
+  claude 3 sonnet.
+\newblock \emph{Anthropic Research}, 2024.
+
+\bibitem[Thakur et~al.(2021)]{thakur2021}
+Nandan Thakur et~al.
+\newblock Beir: A heterogeneous benchmark for zero-shot evaluation of
+  information retrieval models.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, 2021.
+
+\bibitem[Voorhees et~al.(2021)]{voorhees2021}
+Ellen Voorhees et~al.
+\newblock Trec-covid: Constructing a pandemic information retrieval test
+  collection.
+\newblock \emph{SIGIR Forum}, 2021.
+
+\bibitem[Wachsmuth et~al.(2018)]{wachsmuth2018}
+Henning Wachsmuth et~al.
+\newblock Retrieval of the best counterargument without prior topic knowledge.
+\newblock In \emph{Proceedings of the 56th Annual Meeting of the Association
+  for Computational Linguistics}, 2018.
+
+\bibitem[Wang et~al.(2023)]{wang2023}
+Kevin Wang et~al.
+\newblock Interpretability in the wild: a circuit for indirect object
+  identification in gpt-2 small.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2023.
+
+\bibitem[Wei et~al.(2017)]{wei2017}
+Zeng Wei et~al.
+\newblock Reinforcement learning to rank with markov decision process.
+\newblock In \emph{Proceedings of the 40th International ACM SIGIR Conference},
+  2017.
+
+\bibitem[Williams(1992)]{williams1992}
+Ronald~J. Williams.
+\newblock Simple statistical gradient-following algorithms for connectionist
+  reinforcement learning.
+\newblock \emph{Machine Learning}, 1992.
+
+\bibitem[Xiong et~al.(2021)]{xiong2021}
+Lee Xiong et~al.
+\newblock Approximate nearest neighbor negative contrastive learning for dense
+  text retrieval.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2021.
+
+\bibitem[Yu et~al.(2022)]{yu2022cocodr}
+Yue Yu et~al.
+\newblock Coco-dr: Combating out-of-distribution shifts in dense retrieval with
+  contrastive pretraining.
+\newblock \emph{arXiv preprint arXiv:2210.15212}, 2022.
+
+\bibitem[Zhan et~al.(2021)]{zhan2021}
+Jingtao Zhan et~al.
+\newblock Optimizing dense retrieval model training with hard negatives.
+\newblock In \emph{Proceedings of the 44th International ACM SIGIR Conference
+  on Research and Development in Information Retrieval}, 2021.
+
+\bibitem[Zheng et~al.(2024)]{zheng2024softqe}
+Rui Zheng et~al.
+\newblock Softqe: Distilling llm-expanded queries directly into dense
+  representations.
+\newblock \emph{arXiv preprint arXiv:2402.12663}, 2024.
+
+\bibitem[Ziegler et~al.(2019)]{ziegler2019}
+Daniel~M. Ziegler et~al.
+\newblock Fine-tuning language models from human preferences.
+\newblock \emph{arXiv preprint arXiv:1909.08593}, 2019.
+
+\end{thebibliography}

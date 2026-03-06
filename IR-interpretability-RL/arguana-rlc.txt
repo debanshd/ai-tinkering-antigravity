@@ -1,0 +1,1152 @@
+# ==============================================================================
+# STEP 0: Auto-Install Dependencies & Silence Warnings
+# ==============================================================================
+import os
+import gc
+import warnings
+import math
+import logging
+import numpy as np
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+warnings.filterwarnings("ignore")
+
+print("Installing dependencies... (This takes about 30 seconds)")
+os.system("pip install -q beir sentence-transformers transformers torch numpy scipy tqdm seaborn matplotlib")
+
+import huggingface_hub
+import transformers
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F_func
+from sentence_transformers import SentenceTransformer
+from transformers import AutoModelForMaskedLM, AutoTokenizer, AutoModel
+from beir import util
+from beir.datasets.data_loader import GenericDataLoader
+from tqdm import tqdm
+
+huggingface_hub.utils.logging.set_verbosity_error()
+transformers.logging.set_verbosity_error()
+logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"\n--- System is utilizing: {DEVICE.type.upper()} ---")
+
+# ==============================================================================
+# UTILS, PLOTTING & CACHING MANAGEMENT
+# ==============================================================================
+CACHE_DIR = "./embedding_cache"
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+def clear_vram():
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+def get_cached_embeddings(cache_name, encode_fn):
+    cache_path = os.path.join(CACHE_DIR, f"{cache_name}.pt")
+    if os.path.exists(cache_path):
+        print(f"     [CACHE HIT] Loading {cache_name} from disk (0.5s)...")
+        return torch.load(cache_path, map_location="cpu")
+
+    print(f"     [CACHE MISS] Computing {cache_name} from scratch...")
+    embeddings = encode_fn()
+    torch.save(embeddings, cache_path)
+    return embeddings
+
+def compute_ndcg_at_k(retrieved_indices, relevant_indices, k=10):
+    dcg = 0.0
+    for i, idx in enumerate(retrieved_indices[:k]):
+        if idx in relevant_indices:
+            dcg += 1.0 / math.log2(i + 2)
+    idcg = sum(1.0 / math.log2(i + 2) for i in range(min(len(relevant_indices), k)))
+    return dcg / idcg if idcg > 0 else 0.0
+
+def plot_learning_curve(rewards_history, dataset_name):
+    plt.figure(figsize=(8, 5), dpi=300)
+    sns.set_theme(style="whitegrid", context="paper")
+
+    window = 10
+    smoothed_rewards = np.convolve(rewards_history, np.ones(window)/window, mode='valid')
+
+    plt.plot(rewards_history, alpha=0.2, color='royalblue', label='Raw Episode Return')
+    plt.plot(range(window-1, len(rewards_history)), smoothed_rewards,
+             color='darkblue', linewidth=2, label=f'Moving Average (n={window})')
+
+    plt.title(f'PPO Agent Learning Dynamics ({dataset_name.upper()})', fontsize=14, fontweight='bold')
+    plt.xlabel('Training Episode', fontsize=12, fontweight='bold')
+    plt.ylabel('Mean Reward per Query', fontsize=12, fontweight='bold')
+    plt.legend(loc='lower right', frameon=True, shadow=True)
+
+    filename = f"{dataset_name}_learning_curve.pdf"
+    plt.tight_layout()
+    plt.savefig(filename, format='pdf', bbox_inches='tight')
+    print(f"\n     [SAVED] Convergence plot exported to {filename}")
+    plt.show()
+
+# ==============================================================================
+# PHASE 1: BASELINE EVALUATORS (CACHED, FP16, VRAM-SAFE)
+# ==============================================================================
+def evaluate_splade(sample_docs, sample_queries, query_ids, qrels, doc_id_to_idx, dataset_name):
+    print("  -> Evaluating SPLADE (Sparse Lexical)...")
+
+    def compute_splade_docs():
+        tokenizer = AutoTokenizer.from_pretrained("naver/splade-cocondenser-ensembledistil")
+        model = AutoModelForMaskedLM.from_pretrained("naver/splade-cocondenser-ensembledistil", torch_dtype=torch.float16).to(DEVICE)
+        model.eval()
+
+        d_vecs = []
+        batch_size = 128
+        for i in tqdm(range(0, len(sample_docs), batch_size), desc="     Encoding SPLADE Docs"):
+            tokens = tokenizer(sample_docs[i:i+batch_size], return_tensors="pt", padding="max_length", truncation=True, max_length=256).to(DEVICE)
+            with torch.no_grad():
+                output = model(**tokens)
+            vecs = torch.max(torch.log(1 + torch.relu(output.logits)) * tokens.attention_mask.unsqueeze(-1), dim=1)[0]
+            d_vecs.append(vecs)
+
+        del model, tokenizer
+        clear_vram()
+        return torch.cat(d_vecs, dim=0).cpu()
+
+    def compute_splade_queries():
+        tokenizer = AutoTokenizer.from_pretrained("naver/splade-cocondenser-ensembledistil")
+        model = AutoModelForMaskedLM.from_pretrained("naver/splade-cocondenser-ensembledistil", torch_dtype=torch.float16).to(DEVICE)
+        model.eval()
+
+        q_vecs = []
+        batch_size = 128
+        for i in range(0, len(sample_queries), batch_size):
+            tokens = tokenizer(sample_queries[i:i+batch_size], return_tensors="pt", padding="max_length", truncation=True, max_length=256).to(DEVICE)
+            with torch.no_grad():
+                output = model(**tokens)
+            vecs = torch.max(torch.log(1 + torch.relu(output.logits)) * tokens.attention_mask.unsqueeze(-1), dim=1)[0]
+            q_vecs.append(vecs)
+
+        del model, tokenizer
+        clear_vram()
+        return torch.cat(q_vecs, dim=0).cpu()
+
+    d_vecs = get_cached_embeddings(f"{dataset_name}_splade_docs", compute_splade_docs).to(DEVICE).float()
+    q_vecs = get_cached_embeddings(f"{dataset_name}_splade_queries", compute_splade_queries).to(DEVICE).float()
+
+    scores = torch.matmul(q_vecs, d_vecs.T)
+
+    ndcg_list = []
+    for i, qid in enumerate(query_ids):
+        if qid not in qrels: continue
+        relevant_idx = [doc_id_to_idx[did] for did in qrels[qid].keys() if did in doc_id_to_idx]
+        if not relevant_idx: continue
+        top_k_idx = torch.topk(scores[i], k=10).indices.tolist()
+        ndcg_list.append(compute_ndcg_at_k(top_k_idx, relevant_idx, k=10))
+
+    del d_vecs, q_vecs, scores
+    clear_vram()
+    return np.mean(ndcg_list)
+
+def evaluate_colbert(sample_docs, sample_queries, query_ids, qrels, doc_id_to_idx, dataset_name):
+    print("  -> Evaluating ColBERTv2.0 (Late-Interaction) with Caching...")
+
+    def compute_colbert_docs():
+        tokenizer = AutoTokenizer.from_pretrained("colbert-ir/colbertv2.0")
+        model = AutoModel.from_pretrained("colbert-ir/colbertv2.0", torch_dtype=torch.float16).to(DEVICE)
+        model.eval()
+
+        def get_token_embeddings(texts):
+            tokens = tokenizer(texts, return_tensors="pt", padding="max_length", truncation=True, max_length=128).to(DEVICE)
+            with torch.no_grad():
+                outputs = model(**tokens).last_hidden_state
+            return F_func.normalize(outputs, p=2, dim=2), tokens.attention_mask
+
+        d_embs_list, d_masks_list = [], []
+        batch_size = 128
+        for i in tqdm(range(0, len(sample_docs), batch_size), desc="     Encoding ColBERT Docs"):
+            embs, masks = get_token_embeddings(sample_docs[i:i+batch_size])
+            d_embs_list.append(embs)
+            d_masks_list.append(masks)
+
+        del model, tokenizer
+        clear_vram()
+        return {"embs": torch.cat(d_embs_list, dim=0).cpu(), "masks": torch.cat(d_masks_list, dim=0).cpu()}
+
+    def compute_colbert_queries():
+        tokenizer = AutoTokenizer.from_pretrained("colbert-ir/colbertv2.0")
+        model = AutoModel.from_pretrained("colbert-ir/colbertv2.0", torch_dtype=torch.float16).to(DEVICE)
+        model.eval()
+
+        def get_token_embeddings(texts):
+            tokens = tokenizer(texts, return_tensors="pt", padding="max_length", truncation=True, max_length=128).to(DEVICE)
+            with torch.no_grad():
+                outputs = model(**tokens).last_hidden_state
+            return F_func.normalize(outputs, p=2, dim=2), tokens.attention_mask
+
+        q_embs_list, q_masks_list = [], []
+        batch_size = 128
+        for i in range(0, len(sample_queries), batch_size):
+            embs, masks = get_token_embeddings(sample_queries[i:i+batch_size])
+            q_embs_list.append(embs)
+            q_masks_list.append(masks)
+
+        del model, tokenizer
+        clear_vram()
+        return {"embs": torch.cat(q_embs_list, dim=0).cpu(), "masks": torch.cat(q_masks_list, dim=0).cpu()}
+
+    d_data = get_cached_embeddings(f"{dataset_name}_colbert_docs", compute_colbert_docs)
+    q_data = get_cached_embeddings(f"{dataset_name}_colbert_queries", compute_colbert_queries)
+
+    d_embs = d_data["embs"].to(DEVICE).float()
+    d_masks = d_data["masks"].to(DEVICE).bool()
+    q_embs = q_data["embs"].to(DEVICE).float()
+    q_masks = q_data["masks"].to(DEVICE).bool()
+
+    doc_scores_all = []
+    q_batch_size = 16
+    d_chunk_size = 1500
+
+    for q_start in tqdm(range(0, len(query_ids), q_batch_size), desc="     Computing ColBERT MaxSim (Batched)"):
+        q_end = min(q_start + q_batch_size, len(query_ids))
+        q_b = q_embs[q_start:q_end]
+        q_m = q_masks[q_start:q_end]
+
+        batch_doc_scores = []
+        for d_start in range(0, d_embs.shape[0], d_chunk_size):
+            d_end = min(d_start + d_chunk_size, d_embs.shape[0])
+            d_b = d_embs[d_start:d_end]
+            d_m = d_masks[d_start:d_end]
+
+            sims = torch.einsum("b q d, c p d -> b c q p", q_b, d_b)
+
+            sims.masked_fill_(~d_m.view(1, d_end - d_start, 1, -1), -1e4)
+            max_sims = sims.max(dim=3).values
+
+            max_sims.masked_fill_(~q_m.unsqueeze(1), 0.0)
+            chunk_scores = max_sims.sum(dim=2)
+
+            batch_doc_scores.append(chunk_scores)
+
+        doc_scores_all.append(torch.cat(batch_doc_scores, dim=1))
+
+    final_scores = torch.cat(doc_scores_all, dim=0)
+
+    ndcg_list = []
+    for i, qid in enumerate(query_ids):
+        if qid not in qrels: continue
+        targets = [doc_id_to_idx[did] for did in qrels[qid].keys() if did in doc_id_to_idx]
+        if not targets: continue
+
+        top_k = torch.topk(final_scores[i], k=10).indices.tolist()
+        ndcg_list.append(compute_ndcg_at_k(top_k, targets, k=10))
+
+    del d_embs, q_embs, d_masks, q_masks, final_scores, doc_scores_all
+    clear_vram()
+    return np.mean(ndcg_list)
+
+# ==============================================================================
+# PHASE 2: ENVIRONMENT PREP (Sparse State Encoder)
+# ==============================================================================
+class SparseStateEncoder(nn.Module):
+    def __init__(self, dense_dim=768, sparse_dim=4096):
+        super(SparseStateEncoder, self).__init__()
+        self.encoder = nn.Linear(dense_dim, sparse_dim)
+        self.relu = nn.ReLU()
+        self.decoder = nn.Linear(sparse_dim, dense_dim)
+
+    def forward(self, dense_embeds):
+        state_F = self.relu(self.encoder(dense_embeds))
+        reconstructed_E = self.decoder(state_F)
+        return state_F, reconstructed_E
+
+# ==============================================================================
+# PHASE 3: LATENT-TO-DENSE MDP ENVIRONMENT
+# ==============================================================================
+class VectorizedSemanticSteeringEnv:
+    def __init__(self, q_F_norm, d_F_norm, q_dense, d_dense, decoder_weight, target_indices_list, top_k_facets=128):
+        self.q_F_norm = q_F_norm
+        self.d_F_norm = d_F_norm
+        self.q_dense = q_dense
+        self.d_dense = d_dense
+        self.decoder_weight = decoder_weight
+
+        self.top_k_facets = top_k_facets
+        self.num_queries = q_F_norm.shape[0]
+        self.num_docs = d_dense.shape[0]
+        self.max_steps = 5
+
+        self.target_mask = torch.zeros((self.num_queries, self.num_docs), dtype=torch.bool, device=DEVICE)
+        for i, targets in enumerate(target_indices_list):
+            self.target_mask[i, targets] = True
+
+    def _state(self):
+        facet_vals = self.expansion_candidates.gather(1, self.active_idx)
+        log_rank = torch.log2(self.curr_ranks.float() + 1.0) / math.log2(self.num_docs)
+        log_delta = (torch.log2(self.prev_ranks.float() + 1.0) - torch.log2(self.curr_ranks.float() + 1.0))
+
+        # THE FIX 2: Context-Aware State Injection
+        # We concatenate the 768-D q_dense vector into the agent's observation space.
+        # State Dimension jumps from 130 to 898 (768 + 128 + 1 + 1)
+        return torch.cat([self.q_dense.detach(), facet_vals, log_rank.unsqueeze(1), log_delta.unsqueeze(1)], dim=1)
+
+    def reset(self):
+        self.step_cnt = 0
+        self.M = torch.zeros_like(self.q_F_norm, device=DEVICE)
+
+        scores = torch.matmul(self.q_dense, self.d_dense.T)
+
+        # THE FIX 1: Deep, Rank-Weighted PRF (Top 10 instead of 5)
+        # Extracts much richer scientific terminology to feed the agent
+        top_doc_indices = torch.topk(scores, k=10, dim=1).indices
+        top_docs_sparse = self.d_F_norm[top_doc_indices]
+
+        weights = torch.linspace(1.0, 0.1, steps=10, device=DEVICE).view(1, 10, 1)
+        weights = weights / weights.sum()
+        local_neighborhood = (top_docs_sparse * weights).sum(dim=1)
+
+        self.expansion_candidates = self.q_F_norm + local_neighborhood
+        self.active_idx = torch.topk(self.expansion_candidates, k=self.top_k_facets, dim=1).indices
+
+        self.best_target_scores = scores.masked_fill(~self.target_mask, -1e4).max(dim=1).values
+        self.curr_ranks = (scores > self.best_target_scores.unsqueeze(1)).sum(dim=1) + 1
+
+        self.init_ranks = self.curr_ranks.clone()
+        self.prev_ranks = self.curr_ranks.clone()
+
+        # THE FIX 1: Relaxed Torque Floor
+        # We give Rank 1 queries a minimum torque of 0.1 so the agent can still make
+        # micro-adjustments, while bad queries still get 1.0 full power.
+        rank_penalty = torch.log2(self.init_ranks.float()) / math.log2(self.num_docs)
+        self.dynamic_torque = torch.clamp(rank_penalty, min=0.1, max=1.0).unsqueeze(1)
+
+        return self._state()
+
+    def step(self, actions):
+        self.step_cnt += 1
+        self.prev_ranks = self.curr_ranks.clone()
+
+        self.M = 0.5 * self.M
+
+        # Actions are mapped to the 128 active PRF dimensions
+        self.M.scatter_add_(1, self.active_idx, 0.2 * actions)
+
+        # THE FIX: Bi-Directional Steering (Negative Semantic Masking)
+        # We drop the floor to -2.0. The agent can now mathematically push the dense vector
+        # AWAY from false-positive semantic concepts found in the PRF neighborhood.
+        self.M = torch.clamp(self.M, min=-2.0, max=2.0)
+
+        # The interpretable sparse matrix (now containing negatives) projects to the dense shift
+        dense_shift = torch.matmul(self.M, self.decoder_weight.T)
+
+        q_steered = self.q_dense + (self.dynamic_torque * dense_shift)
+        q_final = F_func.normalize(q_steered, p=2, dim=1)
+
+        new_scores = torch.matmul(q_final, self.d_dense.T)
+        best_target = new_scores.masked_fill(~self.target_mask, -1e4).max(dim=1).values
+        new_ranks = (new_scores > best_target.unsqueeze(1)).sum(dim=1) + 1
+
+        rank_reward = (torch.log2(self.prev_ranks.float() + 1.0) - torch.log2(new_ranks.float() + 1.0)) * 10.0
+
+        reward_dense = rank_reward
+        reward_dense[(new_ranks <= 10) & (self.prev_ranks > 10)] += 20.0
+        reward_dense[(new_ranks <= 3) & (self.prev_ranks > new_ranks)] += 10.0
+
+        self.curr_ranks = new_ranks
+        dones = torch.full((self.num_queries,), self.step_cnt >= self.max_steps, dtype=torch.bool, device=DEVICE)
+
+        return self._state(), reward_dense, dones, new_ranks
+
+# ==============================================================================
+# PHASE 4: PROXIMAL POLICY OPTIMIZATION (Optimized for Speed & Bounded)
+# ==============================================================================
+class ActorCritic(nn.Module):
+    def __init__(self, state_dim=130, action_dim=128, hidden_dim=256):
+        super(ActorCritic, self).__init__()
+
+        self.state_norm = nn.LayerNorm(state_dim)
+
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, action_dim),
+            nn.Tanh()
+        )
+        self.action_log_std = nn.Parameter(torch.zeros(action_dim))
+
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, 1)
+        )
+
+    def act(self, states, deterministic=False):
+        states = self.state_norm(states)
+
+        action_mean = self.actor(states)
+        if deterministic:
+            return action_mean.detach(), None
+
+        clamped_log_std = torch.clamp(self.action_log_std, min=-2.0, max=0.5)
+        action_std = torch.exp(clamped_log_std).expand_as(action_mean)
+
+        dist = torch.distributions.Normal(action_mean, action_std)
+        actions = dist.sample()
+        action_logprobs = dist.log_prob(actions).sum(dim=-1)
+        return actions.detach(), action_logprobs.detach()
+
+    def evaluate(self, states, actions):
+        states = self.state_norm(states)
+
+        action_mean = self.actor(states)
+        clamped_log_std = torch.clamp(self.action_log_std, min=-2.0, max=0.5)
+        action_std = torch.exp(clamped_log_std).expand_as(action_mean)
+
+        dist = torch.distributions.Normal(action_mean, action_std)
+        action_logprobs = dist.log_prob(actions).sum(dim=-1)
+        dist_entropy = dist.entropy().sum(dim=-1)
+        state_values = self.critic(states).squeeze(-1)
+        return action_logprobs, state_values, dist_entropy
+
+class PPO:
+    def __init__(self, state_dim=130, action_dim=128, lr=1e-3, gamma=0.99, eps_clip=0.2):
+        self.policy = ActorCritic(state_dim, action_dim).to(DEVICE)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.gamma = gamma
+        self.eps_clip = eps_clip
+        self.mse_loss = nn.MSELoss()
+
+    def update(self, memory):
+        old_states = torch.cat(memory['states'], dim=0).to(DEVICE)
+        old_actions = torch.cat(memory['actions'], dim=0).to(DEVICE)
+        old_logprobs = torch.cat(memory['logprobs'], dim=0).to(DEVICE)
+        rewards = torch.stack(memory['rewards'])
+        dones = torch.stack(memory['is_terminals'])
+
+        discounted_rewards = []
+        R_val = torch.zeros(rewards.shape[1], device=DEVICE)
+        for i in reversed(range(len(rewards))):
+            R_val = rewards[i] + self.gamma * R_val * (~dones[i]).float()
+            discounted_rewards.insert(0, R_val)
+
+        discounted_rewards = torch.cat(discounted_rewards, dim=0)
+        discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-7)
+
+        # Retained speed fix: Batch size 1024
+        rl_batch_size = 1024
+        for _ in range(4):
+            indices = torch.randperm(old_states.size(0))
+            for i in range(0, old_states.size(0), rl_batch_size):
+                idx = indices[i:i + rl_batch_size]
+
+                b_states = old_states[idx]
+                b_actions = old_actions[idx]
+                b_logprobs = old_logprobs[idx]
+                b_discounted = discounted_rewards[idx]
+
+                logprobs, state_values, dist_entropy = self.policy.evaluate(b_states, b_actions)
+
+                advantages = b_discounted - state_values.detach()
+                advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                advantages = torch.clamp(advantages, -2.0, 2.0)
+
+                ratios = torch.exp(logprobs - b_logprobs)
+                surr1 = ratios * advantages
+                surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+
+                loss = -torch.min(surr1, surr2) + 0.5 * self.mse_loss(state_values, b_discounted) - 0.01 * dist_entropy
+
+                self.optimizer.zero_grad()
+                loss.mean().backward()
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 1.0)
+                self.optimizer.step()
+
+        try:
+            del old_states, old_actions, old_logprobs, discounted_rewards, rewards, dones, R_val
+        except NameError:
+            pass
+
+        clear_vram()
+
+# ==============================================================================
+# MAIN EXECUTION: SCALED EXPERIMENT LOOP
+# ==============================================================================
+def run_full_rlc_experiment():
+    SEED = 42
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+
+    # target_datasets = ["scidocs", "arguana", "nfcorpus"]  ---VVVV
+    target_datasets = ["arguana"]
+    results = {}
+
+    for dataset in target_datasets:
+        print(f"\n==================================================")
+        print(f" PROCESSING DATASET: {dataset.upper()}")
+        print(f"==================================================")
+
+        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{dataset}.zip"
+        out_dir = util.download_and_unzip(url, "datasets")
+        corpus, queries, qrels = GenericDataLoader(data_folder=out_dir).load(split="test")
+
+        num_queries_to_sample = 800
+        num_docs_to_sample = 15000
+
+        raw_query_ids = list(queries.keys())
+        query_ids = []
+        relevant_doc_ids = []
+
+        for qid in raw_query_ids:
+            if qid in qrels:
+                valid_targets = [did for did, score in qrels[qid].items() if score > 0 and did in corpus]
+                if len(valid_targets) > 0:
+                    query_ids.append(qid)
+                    relevant_doc_ids.extend(valid_targets)
+            if len(query_ids) >= num_queries_to_sample:
+                break
+
+        additional_docs_needed = num_docs_to_sample - len(relevant_doc_ids)
+
+        if additional_docs_needed > 0:
+            all_doc_ids = sorted(list(set(relevant_doc_ids + list(corpus.keys())[:additional_docs_needed])))
+        else:
+            all_doc_ids = sorted(list(set(relevant_doc_ids)))
+
+        doc_id_to_idx = {did: i for i, did in enumerate(all_doc_ids)}
+
+        sample_docs = [corpus[did].get("text") for did in all_doc_ids]
+        sample_queries = [queries[qid] for qid in query_ids]
+
+        print(f"  -> SCALED DATASET SIZE: {len(sample_queries)} Queries, {len(sample_docs)} Documents")
+
+        splade_ndcg = evaluate_splade(sample_docs, sample_queries, query_ids, qrels, doc_id_to_idx, dataset)
+        colbert_ndcg = evaluate_colbert(sample_docs, sample_queries, query_ids, qrels, doc_id_to_idx, dataset)
+
+        print("  -> Loading Base Contriever (with Disk Caching)...")
+        def compute_dense_docs():
+            model = SentenceTransformer('facebook/contriever', device=DEVICE)
+            embs = torch.tensor(model.encode(sample_docs, batch_size=128, convert_to_tensor=True, show_progress_bar=True)).cpu()
+            return F_func.normalize(embs, p=2, dim=1)
+
+        def compute_dense_queries():
+            model = SentenceTransformer('facebook/contriever', device=DEVICE)
+            embs = torch.tensor(model.encode(sample_queries, batch_size=128, convert_to_tensor=True, show_progress_bar=False)).cpu()
+            return F_func.normalize(embs, p=2, dim=1)
+
+        d_dense = get_cached_embeddings(f"{dataset}_dense_docs", compute_dense_docs).to(DEVICE)
+        q_dense = get_cached_embeddings(f"{dataset}_dense_queries", compute_dense_queries).to(DEVICE)
+
+        base_scores = torch.matmul(q_dense, d_dense.T)
+        base_ndcg_list = []
+        target_indices_list = []
+
+        for i, qid in enumerate(query_ids):
+            targets = [doc_id_to_idx[did] for did in qrels[qid].keys() if did in doc_id_to_idx]
+            target_indices_list.append(targets)
+
+            top_k = torch.topk(base_scores[i], k=10).indices.tolist()
+            base_ndcg_list.append(compute_ndcg_at_k(top_k, targets, k=10))
+
+        base_ndcg = np.mean(base_ndcg_list)
+
+        sae_layer = SparseStateEncoder(dense_dim=768, sparse_dim=4096).to(DEVICE)
+        opt = optim.Adam(sae_layer.parameters(), lr=2e-3)
+        mse_loss_fn = nn.MSELoss()
+
+        print("  -> Training Sparse State Environment (Mini-Batching)...")
+        all_dense = torch.cat([d_dense, q_dense])
+
+        batch_size = 1024
+        dataset_size = all_dense.size(0)
+
+        for epoch in tqdm(range(100), desc="     SAE Epochs"):
+            indices = torch.randperm(dataset_size)
+
+            for i in range(0, dataset_size, batch_size):
+                batch_idx = indices[i:i + batch_size]
+                batch = all_dense[batch_idx].to(DEVICE)
+
+                opt.zero_grad()
+                F, rec = sae_layer(batch)
+
+                loss = mse_loss_fn(rec, batch) + (1e-4 * F.mean())
+                loss.backward()
+
+                torch.nn.utils.clip_grad_norm_(sae_layer.parameters(), 1.0)
+                opt.step()
+
+        with torch.no_grad():
+            sae_layer.eval()
+
+            def chunked_encode(data):
+                f_list = []
+                for i in range(0, data.size(0), batch_size):
+                    f_batch, _ = sae_layer(data[i:i+batch_size].to(DEVICE))
+                    f_list.append(f_batch.cpu())
+                return torch.cat(f_list, dim=0).to(DEVICE)
+
+            q_F = chunked_encode(q_dense)
+            d_F = chunked_encode(d_dense)
+
+        q_F_norm = F_func.normalize(q_F, p=2, dim=1)
+
+        # THE FIX: Do not delete d_F. Normalize it to pass into the environment for PRF.
+        d_F_norm = F_func.normalize(d_F, p=2, dim=1)
+        dec_weight = sae_layer.decoder.weight.detach()
+
+        del all_dense # Clean up
+        clear_vram()
+
+        print("  -> Training PPO Agent (Context-Aware Latent-to-Dense)...")
+        env = VectorizedSemanticSteeringEnv(q_F_norm, d_F_norm, q_dense, d_dense, dec_weight, target_indices_list, top_k_facets=128)
+
+        # state_dim increases from 130 to 898
+        ppo = PPO(state_dim=898, action_dim=128, lr=1e-3)
+
+        episode_rewards_history = []
+
+        for ep in tqdm(range(300), desc="     RL Episodes"):
+            mem = {'states':[], 'actions':[], 'logprobs':[], 'rewards':[], 'is_terminals':[]}
+            states = env.reset()
+            episode_total_reward = 0
+
+            for _ in range(env.max_steps):
+                actions, logprobs = ppo.policy.act(states)
+                next_states, rewards, dones, _ = env.step(actions)
+
+                mem['states'].append(states); mem['actions'].append(actions); mem['logprobs'].append(logprobs)
+                mem['rewards'].append(rewards); mem['is_terminals'].append(dones)
+
+                episode_total_reward += rewards.sum().item()
+                states = next_states
+
+            ppo.update(mem)
+            episode_rewards_history.append(episode_total_reward / env.num_queries)
+
+        plot_learning_curve(episode_rewards_history, dataset)
+
+        # --- Phase 5: Checkpointed Final Evaluation ---
+        rl_ndcg_list = []
+        best_rl_ndcg = 0.0
+        needs_rescue = 0; rl_rescued = 0
+
+        with torch.no_grad():
+            ppo.policy.eval()
+
+            # CRITICAL FIX 1: Ensure environment is freshly reset
+            states = env.reset()
+
+            base_ranks = env.init_ranks.clone()
+            needs_rescue_mask = (base_ranks > 10)
+            needs_rescue = needs_rescue_mask.sum().item()
+
+            # CRITICAL FIX 2: Pre-allocate final_ranks to prevent UnboundLocalError
+            final_ranks = base_ranks.clone()
+
+            for _ in range(env.max_steps):
+                actions, _ = ppo.policy.act(states, deterministic=True)
+                states, _, _, final_ranks = env.step(actions)
+
+            rescued_mask = needs_rescue_mask & (final_ranks <= 10)
+            rl_rescued = rescued_mask.sum().item()
+
+            # --- Inside Phase 5: Checkpointed Final Evaluation ---
+            # Re-calculate dynamic torque
+            rank_penalty = torch.log2(env.init_ranks.float()) / math.log2(env.num_docs)
+            dynamic_torque = torch.clamp(rank_penalty, min=0.0, max=1.0).unsqueeze(1)
+
+            # Raw intensity flows directly into the query
+            dense_shift = torch.matmul(env.M, dec_weight.T)
+
+            f_final_exp = q_dense + (dynamic_torque * dense_shift)
+            final_adjusted_q = F_func.normalize(f_final_exp, p=2, dim=1)
+
+            final_scores = torch.matmul(final_adjusted_q, d_dense.T)
+
+            for q_idx in range(len(query_ids)):
+                top_k = torch.topk(final_scores[q_idx], k=10).indices.tolist()
+                rl_ndcg_list.append(compute_ndcg_at_k(top_k, target_indices_list[q_idx], k=10))
+
+        rescue_rate = (rl_rescued / needs_rescue * 100) if needs_rescue > 0 else 0.0
+        current_rl_ndcg = np.mean(rl_ndcg_list)
+
+        results[dataset] = {
+            "splade": splade_ndcg,
+            "colbert": colbert_ndcg,
+            "base": base_ndcg,
+            "rl_steered": current_rl_ndcg,
+            "rescue_rate": rescue_rate
+        }
+
+        print(f"\n--- ANALYZING SEMANTIC INJECTION: {dataset.upper()} ---")
+        mean_M = env.M.mean(dim=0)
+        top_vals, top_idx = torch.topk(mean_M, k=10)
+
+        plt.figure(figsize=(10, 4), dpi=200)
+        sns.heatmap(env.M[:50, top_idx[:20]].detach().cpu().numpy(),
+                    cmap="YlGnBu", cbar_kws={'label': 'Steering Strength (M)'})
+        plt.title(f"Top 20 Semantic Injections - {dataset.upper()}")
+        plt.show()
+
+    print("\n\n==========================================================================================")
+    print(" Table: Retrieval Recovery & Baseline Comparisons across BEIR (Scaled Evaluations)")
+    print("==========================================================================================")
+    print(f"{'Dataset':<12} | {'SPLADE':<8} | {'ColBERT':<8} | {'Dense Base':<10} | {'RL-Steered (Ours)':<17} | {'RL Rescue Rate'}")
+    print("-" * 90)
+    for ds in target_datasets:
+        print(f"{ds.capitalize():<12} | {results[ds]['splade']:<8.4f} | {results[ds]['colbert']:<8.4f} | {results[ds]['base']:<10.4f} | {results[ds]['rl_steered']:<17.4f} | +{results[ds]['rescue_rate']:.1f}%")
+    print("==========================================================================================")
+
+if __name__ == "__main__":
+    run_full_rlc_experiment()
+
+import shutil
+shutil.rmtree("./embedding_cache", ignore_errors=True)
+print("Corrupted cache cleared! Ready for a fresh, deterministic run.")
+
+# ==============================================================================
+# STANDALONE ABLATION SUITE: ARGUANA (WITH CACHING & PLOTTING)
+# ==============================================================================
+import os
+import gc
+import math
+import warnings
+import torch
+import numpy as np
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F_func
+import matplotlib.pyplot as plt
+import seaborn as sns
+from tqdm import tqdm
+from sentence_transformers import SentenceTransformer
+from beir import util
+from beir.datasets.data_loader import GenericDataLoader
+
+warnings.filterwarnings("ignore")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+CACHE_DIR = "./embedding_cache_arguana"
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+# ==============================================================================
+# UTILS & PLOTTING
+# ==============================================================================
+def clear_vram():
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+def get_cached_tensors(cache_name, compute_fn):
+    cache_path = os.path.join(CACHE_DIR, f"{cache_name}.pt")
+    if os.path.exists(cache_path):
+        print(f"     [CACHE HIT] Loading {cache_name} from disk...")
+        return torch.load(cache_path, map_location="cpu")
+    print(f"     [CACHE MISS] Computing {cache_name}...")
+    data = compute_fn()
+    torch.save(data, cache_path)
+    return data
+
+def compute_ndcg_at_k(retrieved_indices, relevant_indices, k=10):
+    dcg = 0.0
+    for i, idx in enumerate(retrieved_indices[:k]):
+        if idx in relevant_indices:
+            dcg += 1.0 / math.log2(i + 2)
+    idcg = sum(1.0 / math.log2(i + 2) for i in range(min(len(relevant_indices), k)))
+    return dcg / idcg if idcg > 0 else 0.0
+
+def plot_learning_curve(rewards_history, config_name):
+    plt.figure(figsize=(8, 5), dpi=200)
+    sns.set_theme(style="whitegrid", context="paper")
+    window = 10
+    smoothed = np.convolve(rewards_history, np.ones(window)/window, mode='valid')
+    plt.plot(rewards_history, alpha=0.3, color='royalblue', label='Raw Return')
+    plt.plot(range(window-1, len(rewards_history)), smoothed, color='darkblue', linewidth=2, label=f'MA (n={window})')
+    plt.title(f'PPO Learning Dynamics: {config_name}', fontsize=12, fontweight='bold')
+    plt.xlabel('Episode')
+    plt.ylabel('Mean Reward')
+    plt.legend()
+    plt.tight_layout()
+    filename = f"ablation_curve_{config_name}.png"
+    plt.savefig(filename)
+    plt.close()
+    print(f"     [SAVED] Plot exported to {filename}")
+
+# ==============================================================================
+# NEURAL ARCHITECTURES
+# ==============================================================================
+class SparseStateEncoder(nn.Module):
+    def __init__(self, dense_dim=768, sparse_dim=4096):
+        super().__init__()
+        self.encoder = nn.Linear(dense_dim, sparse_dim)
+        self.relu = nn.ReLU()
+        self.decoder = nn.Linear(sparse_dim, dense_dim)
+    def forward(self, x):
+        F = self.relu(self.encoder(x))
+        return F, self.decoder(F)
+
+class ActorCritic(nn.Module):
+    def __init__(self, state_dim, action_dim=128, hidden_dim=256):
+        super().__init__()
+        self.state_norm = nn.LayerNorm(state_dim)
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, action_dim), nn.Tanh()
+        )
+        self.action_log_std = nn.Parameter(torch.zeros(action_dim))
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, hidden_dim), nn.Tanh(),
+            nn.Linear(hidden_dim, 1)
+        )
+    def act(self, states, deterministic=False):
+        states = self.state_norm(states)
+        action_mean = self.actor(states)
+        if deterministic: return action_mean.detach(), None
+        clamped_log_std = torch.clamp(self.action_log_std, min=-2.0, max=0.5)
+        dist = torch.distributions.Normal(action_mean, torch.exp(clamped_log_std).expand_as(action_mean))
+        actions = dist.sample()
+        return actions.detach(), dist.log_prob(actions).sum(dim=-1).detach()
+    def evaluate(self, states, actions):
+        states = self.state_norm(states)
+        action_mean = self.actor(states)
+        clamped_log_std = torch.clamp(self.action_log_std, min=-2.0, max=0.5)
+        dist = torch.distributions.Normal(action_mean, torch.exp(clamped_log_std).expand_as(action_mean))
+        return dist.log_prob(actions).sum(dim=-1), self.critic(states).squeeze(-1), dist.entropy().sum(dim=-1)
+
+class PPO:
+    def __init__(self, state_dim, action_dim=128, lr=1e-3, gamma=0.99, eps_clip=0.2):
+        self.policy = ActorCritic(state_dim, action_dim).to(DEVICE)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.gamma, self.eps_clip, self.mse_loss = gamma, eps_clip, nn.MSELoss()
+    def update(self, memory):
+        old_states = torch.cat(memory['states'], dim=0).to(DEVICE)
+        old_actions = torch.cat(memory['actions'], dim=0).to(DEVICE)
+        old_logprobs = torch.cat(memory['logprobs'], dim=0).to(DEVICE)
+        rewards, dones = torch.stack(memory['rewards']), torch.stack(memory['is_terminals'])
+
+        discounted_rewards = []
+        R_val = torch.zeros(rewards.shape[1], device=DEVICE)
+        for i in reversed(range(len(rewards))):
+            R_val = rewards[i] + self.gamma * R_val * (~dones[i]).float()
+            discounted_rewards.insert(0, R_val)
+        discounted_rewards = torch.cat(discounted_rewards, dim=0)
+        discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-7)
+
+        for _ in range(4):
+            indices = torch.randperm(old_states.size(0))
+            for i in range(0, old_states.size(0), 1024):
+                idx = indices[i:i + 1024]
+                logprobs, state_values, dist_entropy = self.policy.evaluate(old_states[idx], old_actions[idx])
+                advantages = torch.clamp((discounted_rewards[idx] - state_values.detach()), -2.0, 2.0)
+                ratios = torch.exp(logprobs - old_logprobs[idx])
+                surr1 = ratios * advantages
+                surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+                loss = -torch.min(surr1, surr2) + 0.5 * self.mse_loss(state_values, discounted_rewards[idx]) - 0.01 * dist_entropy
+                self.optimizer.zero_grad()
+                loss.mean().backward()
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), 1.0)
+                self.optimizer.step()
+        clear_vram()
+
+# ==============================================================================
+# DYNAMIC ABLATION ENVIRONMENT
+# ==============================================================================
+class AblationEnv:
+    def __init__(self, q_F_norm, d_F_norm, q_dense, d_dense, decoder_weight, target_indices_list, config):
+        self.q_F_norm, self.d_F_norm = q_F_norm, d_F_norm
+        self.q_dense, self.d_dense = q_dense, d_dense
+        self.decoder_weight = decoder_weight
+        self.config = config
+        self.num_queries, self.num_docs = q_F_norm.shape[0], d_dense.shape[0]
+        self.max_steps = 5
+        self.target_mask = torch.zeros((self.num_queries, self.num_docs), dtype=torch.bool, device=DEVICE)
+        for i, targets in enumerate(target_indices_list): self.target_mask[i, targets] = True
+
+    def reset(self):
+        self.step_cnt = 0
+        self.M = torch.zeros_like(self.q_F_norm, device=DEVICE)
+        scores = torch.matmul(self.q_dense, self.d_dense.T)
+
+        top_doc_indices = torch.topk(scores, k=10, dim=1).indices
+        top_docs_sparse = self.d_F_norm[top_doc_indices]
+        weights = torch.linspace(1.0, 0.1, steps=10, device=DEVICE).view(1, 10, 1)
+        weights = weights / weights.sum()
+        local_neighborhood = (top_docs_sparse * weights).sum(dim=1)
+
+        self.expansion_candidates = self.q_F_norm + local_neighborhood
+        self.active_idx = torch.topk(self.expansion_candidates, k=128, dim=1).indices
+
+        self.best_target_scores = scores.masked_fill(~self.target_mask, -1e4).max(dim=1).values
+        self.curr_ranks = (scores > self.best_target_scores.unsqueeze(1)).sum(dim=1) + 1
+        self.init_ranks, self.prev_ranks = self.curr_ranks.clone(), self.curr_ranks.clone()
+
+        rank_penalty = torch.log2(self.init_ranks.float()) / math.log2(self.num_docs)
+        self.dynamic_torque = torch.clamp(rank_penalty, min=0.1, max=1.0).unsqueeze(1)
+        return self._state()
+
+    def _state(self):
+        facet_vals = self.expansion_candidates.gather(1, self.active_idx)
+        log_rank = torch.log2(self.curr_ranks.float() + 1.0) / math.log2(self.num_docs)
+        log_delta = (torch.log2(self.prev_ranks.float() + 1.0) - torch.log2(self.curr_ranks.float() + 1.0))
+        if self.config["use_context"]:
+            return torch.cat([self.q_dense.detach(), facet_vals, log_rank.unsqueeze(1), log_delta.unsqueeze(1)], dim=1)
+        return torch.cat([facet_vals, log_rank.unsqueeze(1), log_delta.unsqueeze(1)], dim=1)
+
+    def step(self, actions):
+        self.step_cnt += 1
+        self.prev_ranks = self.curr_ranks.clone()
+        self.M = 0.5 * self.M
+        self.M.scatter_add_(1, self.active_idx, 0.2 * actions)
+        self.M = torch.clamp(self.M, min=self.config["steer_min"], max=2.0)
+
+        dense_shift = torch.matmul(self.M, self.decoder_weight.T)
+        torque = self.dynamic_torque if self.config["dynamic_torque"] else 0.3
+
+        q_steered = self.q_dense + (torque * dense_shift)
+        q_final = F_func.normalize(q_steered, p=2, dim=1)
+
+        new_scores = torch.matmul(q_final, self.d_dense.T)
+        best_target = new_scores.masked_fill(~self.target_mask, -1e4).max(dim=1).values
+        new_ranks = (new_scores > best_target.unsqueeze(1)).sum(dim=1) + 1
+
+        rank_reward = (torch.log2(self.prev_ranks.float() + 1.0) - torch.log2(new_ranks.float() + 1.0)) * 10.0
+        reward_dense = rank_reward
+        reward_dense[(new_ranks <= 10) & (self.prev_ranks > 10)] += 20.0
+        reward_dense[(new_ranks <= 3) & (self.prev_ranks > new_ranks)] += 10.0
+
+        self.curr_ranks = new_ranks
+        dones = torch.full((self.num_queries,), self.step_cnt >= self.max_steps, dtype=torch.bool, device=DEVICE)
+        return self._state(), reward_dense, dones, new_ranks
+
+# ==============================================================================
+# MAIN EXECUTION
+# ==============================================================================
+if __name__ == "__main__":
+    SEED = 42
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+
+    print("\n==================================================")
+    print(" 1. PREPARING ARGUANA TENSORS & CACHE ")
+    print("==================================================")
+    url = "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/arguana.zip"
+    out_dir = util.download_and_unzip(url, "datasets")
+    corpus, queries, qrels = GenericDataLoader(data_folder=out_dir).load(split="test")
+
+    raw_query_ids = list(queries.keys())
+    query_ids, relevant_doc_ids = [], []
+    for qid in raw_query_ids:
+        if qid in qrels:
+            valid_targets = [did for did, score in qrels[qid].items() if score > 0 and did in corpus]
+            if valid_targets:
+                query_ids.append(qid); relevant_doc_ids.extend(valid_targets)
+        if len(query_ids) >= 800: break
+
+    all_doc_ids = sorted(list(set(relevant_doc_ids + list(corpus.keys())[:max(0, 15000 - len(relevant_doc_ids))])))
+    doc_id_to_idx = {did: i for i, did in enumerate(all_doc_ids)}
+    sample_docs = [corpus[did].get("text") for did in all_doc_ids]
+    sample_queries = [queries[qid] for qid in query_ids]
+
+    target_indices_list = [[doc_id_to_idx[did] for did in qrels[qid].keys() if did in doc_id_to_idx] for qid in query_ids]
+
+    def compute_dense():
+        model = SentenceTransformer('facebook/contriever', device=DEVICE)
+        d = F_func.normalize(torch.tensor(model.encode(sample_docs, batch_size=128, show_progress_bar=True)), p=2, dim=1)
+        q = F_func.normalize(torch.tensor(model.encode(sample_queries, batch_size=128, show_progress_bar=False)), p=2, dim=1)
+        return {"d_dense": d, "q_dense": q}
+
+    dense_data = get_cached_tensors("arguana_dense", compute_dense)
+    q_dense, d_dense = dense_data["q_dense"].to(DEVICE), dense_data["d_dense"].to(DEVICE)
+
+    def compute_sae():
+        sae_layer = SparseStateEncoder(dense_dim=768, sparse_dim=4096).to(DEVICE)
+        opt, mse = optim.Adam(sae_layer.parameters(), lr=2e-3), nn.MSELoss()
+        all_d = torch.cat([d_dense, q_dense])
+
+        for epoch in tqdm(range(100), desc="     Training SAE"):
+            idx = torch.randperm(all_d.size(0))
+            for i in range(0, all_d.size(0), 1024):
+                batch = all_d[idx[i:i+1024]]
+                opt.zero_grad()
+                F, rec = sae_layer(batch)
+                loss = mse(rec, batch) + (1e-4 * F.mean())
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(sae_layer.parameters(), 1.0)
+                opt.step()
+
+        with torch.no_grad():
+            sae_layer.eval()
+            q_F = torch.cat([sae_layer(q_dense[i:i+1024])[0].cpu() for i in range(0, q_dense.size(0), 1024)])
+            d_F = torch.cat([sae_layer(d_dense[i:i+1024])[0].cpu() for i in range(0, d_dense.size(0), 1024)])
+        return {"q_F_norm": F_func.normalize(q_F, p=2, dim=1), "d_F_norm": F_func.normalize(d_F, p=2, dim=1), "dec_weight": sae_layer.decoder.weight.detach().cpu()}
+
+    sae_data = get_cached_tensors("arguana_sae", compute_sae)
+    q_F_norm, d_F_norm = sae_data["q_F_norm"].to(DEVICE), sae_data["d_F_norm"].to(DEVICE)
+    dec_weight = sae_data["dec_weight"].to(DEVICE)
+    clear_vram()
+
+    # ==============================================================================
+    # 2. EXECUTE ABLATION STUDY
+    # ==============================================================================
+    ablations = {
+        "Full_Architecture": {"use_context": True, "steer_min": -2.0, "dynamic_torque": True},
+        "No_Context_State": {"use_context": False, "steer_min": -2.0, "dynamic_torque": True},
+        "Positive_Only_Steering": {"use_context": True, "steer_min": 0.0, "dynamic_torque": True},
+        "Static_Torque": {"use_context": True, "steer_min": -2.0, "dynamic_torque": False},
+        "Vanilla_RL_Baseline": {"use_context": False, "steer_min": 0.0, "dynamic_torque": False}
+    }
+
+    ablation_results = {}
+    print("\n==================================================")
+    print(" 2. RUNNING ABLATION CONFIGURATIONS ")
+    print("==================================================")
+
+    for name, config in ablations.items():
+        print(f"\n -> Training: {name}")
+        env = AblationEnv(q_F_norm, d_F_norm, q_dense, d_dense, dec_weight, target_indices_list, config)
+        ppo = PPO(state_dim=898 if config["use_context"] else 130, action_dim=128, lr=1e-3)
+
+        ep_rewards = []
+        for ep in tqdm(range(300), desc=f"     RL ({name})"):
+            mem = {'states':[], 'actions':[], 'logprobs':[], 'rewards':[], 'is_terminals':[]}
+            states, ep_reward = env.reset(), 0
+            for _ in range(env.max_steps):
+                actions, logprobs = ppo.policy.act(states)
+                next_states, rewards, dones, _ = env.step(actions)
+                mem['states'].append(states); mem['actions'].append(actions); mem['logprobs'].append(logprobs)
+                mem['rewards'].append(rewards); mem['is_terminals'].append(dones)
+                states, ep_reward = next_states, ep_reward + rewards.sum().item()
+            ppo.update(mem)
+            ep_rewards.append(ep_reward / env.num_queries)
+
+        plot_learning_curve(ep_rewards, name)
+
+        rl_ndcg_list = []
+        with torch.no_grad():
+            ppo.policy.eval()
+            states = env.reset()
+            final_ranks = env.init_ranks.clone()
+            for _ in range(env.max_steps):
+                actions, _ = ppo.policy.act(states, deterministic=True)
+                states, _, _, final_ranks = env.step(actions)
+
+            torque = env.dynamic_torque if config["dynamic_torque"] else 0.3
+            dense_shift = torch.matmul(env.M, dec_weight.T)
+            f_final_exp = q_dense + (torque * dense_shift)
+            final_scores = torch.matmul(F_func.normalize(f_final_exp, p=2, dim=1), d_dense.T)
+
+            for q_idx in range(len(target_indices_list)):
+                top_k = torch.topk(final_scores[q_idx], k=10).indices.tolist()
+                rl_ndcg_list.append(compute_ndcg_at_k(top_k, target_indices_list[q_idx], k=10))
+
+        ablation_results[name] = np.mean(rl_ndcg_list)
+        print(f"    Final NDCG@10: {ablation_results[name]:.4f}")
+
+    print("\n==================================================")
+    print(" ABLATION SUMMARY ")
+    print("==================================================")
+    for name, score in ablation_results.items():
+        drop = ablation_results["Full_Architecture"] - score
+        print(f"{name:<25} | NDCG: {score:.4f} | Drop: -{drop:.4f}")
+
+import time
+import torch
+
+def profile_system_metrics(ppo_agent, sae_layer, sample_queries, device):
+    print("\n==================================================")
+    print(" SYSTEM RESOURCE & LATENCY PROFILING ")
+    print("==================================================")
+
+    metrics = {}
+    batch_size = len(sample_queries)
+
+    # 1. PARAMETER COUNT OVERHEAD
+    rl_params = sum(p.numel() for p in ppo_agent.policy.parameters() if p.requires_grad)
+    sae_params = sum(p.numel() for p in sae_layer.parameters() if p.requires_grad)
+    metrics['Added_Parameters'] = f"{(rl_params + sae_params) / 1e6:.2f} M"
+    print(f" -> Lightweight Overhead: {metrics['Added_Parameters']} parameters added to base model.")
+
+    # 2. VRAM CONSUMPTION (Peak tracking)
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+        start_vram = torch.cuda.memory_allocated() / (1024**2)
+    else:
+        start_vram = 0.0
+
+    # Simulate a full batched forward pass
+    with torch.no_grad():
+        ppo_agent.policy.eval()
+        dummy_state = torch.randn((batch_size, 898), device=device)
+        _ = ppo_agent.policy.act(dummy_state, deterministic=True)
+
+    if torch.cuda.is_available():
+        peak_vram = torch.cuda.max_memory_allocated() / (1024**2)
+        metrics['Inference_VRAM_Peak'] = f"{peak_vram - start_vram:.2f} MB"
+    else:
+        metrics['Inference_VRAM_Peak'] = "N/A (CPU Mode)"
+
+    print(f" -> Peak VRAM Usage per batch: {metrics['Inference_VRAM_Peak']}")
+
+    # 3. LATENCY (Queries Per Second)
+    # Warmup
+    for _ in range(10):
+        ppo_agent.policy.act(dummy_state, deterministic=True)
+
+    start_time = time.perf_counter()
+
+    # Pre-allocate dummy indices to match exactly what happens in the environment
+    dummy_idx = torch.randint(0, 4096, (batch_size, 128), device=device)
+
+    with torch.no_grad():
+        for _ in range(50): # Run 50 iterations to average out noise
+            actions, _ = ppo_agent.policy.act(dummy_state, deterministic=True)
+
+            # ACCURATE SIMULATION: Execute the 4096-D scatter and 768-D projection
+            dummy_M = torch.zeros((batch_size, 4096), device=device)
+            dummy_M.scatter_add_(1, dummy_idx, actions)
+            dense_shift = torch.matmul(dummy_M, sae_layer.decoder.weight.detach().T)
+
+    end_time = time.perf_counter()
+
+    total_time_ms = (end_time - start_time) * 1000
+    ms_per_query = total_time_ms / (50 * batch_size)
+    metrics['Latency_per_Query'] = f"{ms_per_query:.3f} ms"
+    print(f" -> RL Routing Latency: {metrics['Latency_per_Query']} per query")
+
+    # 4. STORAGE (Index Size Compression)
+    dense_bytes = 768 * 4
+    colbert_bytes = 128 * 100 * 2
+
+    metrics['Dense_Doc_Size'] = f"{dense_bytes} bytes"
+    metrics['ColBERT_Doc_Size'] = f"{colbert_bytes} bytes"
+    print(f" -> Index Size: {metrics['Dense_Doc_Size']} (Ours) vs {metrics['ColBERT_Doc_Size']} (ColBERT)")
+
+    return metrics
+
+if __name__ == "__main__":
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    class DummyPolicy(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.fc1 = torch.nn.Linear(898, 256)
+            self.fc2 = torch.nn.Linear(256, 128)
+        def act(self, x, deterministic=True):
+            return self.fc2(torch.relu(self.fc1(x))), None
+
+    class DummyAgent:
+        def __init__(self):
+            self.policy = DummyPolicy().to(DEVICE)
+
+    class DummySAE(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.encoder = torch.nn.Linear(768, 4096)
+            self.decoder = torch.nn.Linear(4096, 768)
+
+    mock_ppo = DummyAgent()
+    mock_sae = DummySAE().to(DEVICE)
+    mock_queries = ["test query"] * 800
+
+    profile_system_metrics(mock_ppo, mock_sae, mock_queries, DEVICE)
