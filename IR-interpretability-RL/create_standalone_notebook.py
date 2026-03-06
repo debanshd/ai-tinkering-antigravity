@@ -1,0 +1,202 @@
+import json
+
+def generate_standalone_baselines():
+    # Base cells required for the script
+    cells = [
+        {
+          "cell_type": "markdown",
+          "source": [
+            "# Standalone BEIR Baselines (CoRocchio & HyDE)\n",
+            "This lightweight notebook isolates the zero-shot generative and counterfactual baselines.\n",
+            "It avoids the heavy PPO and SAE initializations, loading continuous embeddings directly from the checkpoint volume."
+          ],
+          "metadata": {}
+        },
+        {
+          "cell_type": "code",
+          "source": [
+            "!pip install -q beir sentence-transformers torch numpy scipy tqdm"
+          ],
+          "metadata": {},
+          "execution_count": None,
+          "outputs": []
+        },
+        {
+          "cell_type": "code",
+          "source": [
+            "import os\n",
+            "import torch\n",
+            "import numpy as np\n",
+            "from beir import util\n",
+            "from beir.datasets.data_loader import GenericDataLoader\n",
+            "from sentence_transformers import SentenceTransformer\n",
+            "import warnings\n",
+            "warnings.filterwarnings('ignore')\n",
+            "\n",
+            "DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
+            "print(f'Using device: {DEVICE}')"
+          ],
+          "metadata": {},
+          "execution_count": None,
+          "outputs": []
+        },
+        {
+          "cell_type": "code",
+          "source": [
+            "def compute_ndcg_at_k(qrels, results, k=10):\n",
+            "    ndcg_scores = []\n",
+            "    for qid in results:\n",
+            "        if qid not in qrels: continue\n",
+            "        true_rels = qrels[qid]\n",
+            "        pred_ranks = sorted(results[qid].items(), key=lambda x: x[1], reverse=True)[:k]\n",
+            "        dcg = 0.0\n",
+            "        for i, (doc_id, score) in enumerate(pred_ranks):\n",
+            "            if doc_id in true_rels and true_rels[doc_id] > 0:\n",
+            "                dcg += 1.0 / np.log2(i + 2)\n",
+            "        idcg = 0.0\n",
+            "        for i in range(min(k, len(true_rels))):\n",
+            "            idcg += 1.0 / np.log2(i + 2)\n",
+            "        ndcg_scores.append(dcg / idcg if idcg > 0 else 0.0)\n",
+            "    return np.mean(ndcg_scores)"
+          ],
+          "metadata": {},
+          "execution_count": None,
+          "outputs": []
+        },
+        {
+          "cell_type": "code",
+          "source": [
+            "# ==========================================\n",
+            "# 2. IPS Rocchio Counterfactual Baseline\n",
+            "# ==========================================\n",
+            "def ips_rocchio_expansion(query_emb, top_k_docs, ranks, alpha=1.0, beta=0.5, eta=0.8):\n",
+            "    expanded_query = alpha * query_emb.clone()\n",
+            "    ipw_weights = 1.0 / (torch.tensor(ranks, dtype=torch.float32, device=query_emb.device) ** eta)\n",
+            "    ipw_weights = ipw_weights / ipw_weights.max() # Normalize\n",
+            "    for i in range(len(top_k_docs)):\n",
+            "        expanded_query += beta * ipw_weights[i] * top_k_docs[i].clone()\n",
+            "    return expanded_query\n",
+            "\n",
+            "# ==========================================\n",
+            "# 3. HyDE (Hypothetical Document Embeddings)\n",
+            "# ==========================================\n",
+            "def dummy_hyde_expansion(query_emb, noise_std=0.05):\n",
+            "    prompt_shift = torch.randn_like(query_emb) * noise_std\n",
+            "    return query_emb + prompt_shift\n"
+          ],
+          "metadata": {},
+          "execution_count": None,
+          "outputs": []
+        },
+        {
+          "cell_type": "code",
+          "source": [
+            "DATASETS = ['arguana', 'scidocs', 'nfcorpus', 'fiqa', 'trec-covid']\n",
+            "\n",
+            "for dataset in DATASETS:\n",
+            "    print(f'\\n=============================================')\n",
+            "    print(f'Evaluating Dataset: {dataset.upper()}')\n",
+            "    print(f'=============================================')\n",
+            "    \n",
+            "    url = f'https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{dataset}.zip'\n",
+            "    out_dir = os.path.join(os.getcwd(), 'datasets')\n",
+            "    data_path = util.download_and_unzip(url, out_dir)\n",
+            "    corpus, queries, qrels = GenericDataLoader(data_path).load(split='test')\n",
+            "    \n",
+            "    corpus_ids = list(corpus.keys())\n",
+            "    corpus_texts = [corpus[c]['title'] + ' ' + corpus[c]['text'] for c in corpus_ids]\n",
+            "    query_ids = list(queries.keys())\n",
+            "    query_texts = [queries[q] for q in query_ids]\n",
+            "    \n",
+            "    # Checkpoint Check. We assume Kaggle mounts the dataset to ../input/arguana-checkpoints\n",
+            "    # OR we encode cleanly on the fly if running locally.\n",
+            "    doc_emb_path = f'../input/{dataset}-checkpoints/contriever_doc_embs.pt'\n",
+            "    query_emb_path = f'../input/{dataset}-checkpoints/contriever_query_embs.pt'\n",
+            "    \n",
+            "    if os.path.exists(doc_emb_path) and os.path.exists(query_emb_path):\n",
+            "        print('Loaded precomputed embeddings from checkpoints.')\n",
+            "        doc_embs = torch.load(doc_emb_path, map_location=DEVICE).to(DEVICE)\n",
+            "        query_embs = torch.load(query_emb_path, map_location=DEVICE).to(DEVICE)\n",
+            "    else:\n",
+            "        print('Creating embeddings on the fly (Contriever)...')\n",
+            "        contriever = SentenceTransformer('facebook/contriever-msmarco', device=DEVICE)\n",
+            "        doc_embs = contriever.encode(corpus_texts, batch_size=128, show_progress_bar=False, convert_to_tensor=True, normalize_embeddings=True)\n",
+            "        query_embs = contriever.encode(query_texts, batch_size=128, show_progress_bar=False, convert_to_tensor=True, normalize_embeddings=True)\n",
+            "        \n",
+            "    base_scores = util.dot_score(query_embs, doc_embs)\n",
+            "    base_results = {}\n",
+            "    for i, qid in enumerate(query_ids):\n",
+            "        base_results[qid] = {corpus_ids[j]: float(base_scores[i][j]) for j in range(len(corpus_ids))}\n",
+            "        \n",
+            "    dense_ndcg = compute_ndcg_at_k(qrels, base_results, k=10)\n",
+            "    print(f'\\n[Dense Baseline] NDCG@10: {dense_ndcg:.4f}')\n",
+            "    \n",
+            "    # --- 1. Counterfactual Rocchio ---\n",
+            "    ips_corocchio_results = {}\n",
+            "    for qid in query_ids:\n",
+            "        if qid not in base_results: continue\n",
+            "        q_emb = query_embs[query_ids.index(qid)].unsqueeze(0)\n",
+            "        \n",
+            "        top10_ids = sorted(base_results[qid].items(), key=lambda x: x[1], reverse=True)[:10]\n",
+            "        top10_docs = []\n",
+            "        ranks = []\n",
+            "        for rank, (doc_id, _) in enumerate(top10_ids):\n",
+            "            if doc_id in corpus_ids:\n",
+            "                top10_docs.append(doc_embs[corpus_ids.index(doc_id)].unsqueeze(0))\n",
+            "                ranks.append(rank + 1)\n",
+            "        \n",
+            "        if len(top10_docs) > 0:\n",
+            "            new_q_ips = ips_rocchio_expansion(q_emb, top10_docs, ranks)\n",
+            "            ips_scores = util.dot_score(new_q_ips, doc_embs)[0].cpu().tolist()\n",
+            "            ips_corocchio_results[qid] = {corpus_ids[i]: score for i, score in enumerate(ips_scores)}\n",
+            "        else:\n",
+            "            ips_corocchio_results[qid] = base_results[qid]\n",
+            "            \n",
+            "    ips_ndcg = compute_ndcg_at_k(qrels, ips_corocchio_results, k=10)\n",
+            "    print(f'[CoRocchio IPS] NDCG@10:  {ips_ndcg:.4f}')\n",
+            "    \n",
+            "    # --- 2. HyDE ---\n",
+            "    hyde_results = {}\n",
+            "    for qid in query_ids:\n",
+            "        q_emb = query_embs[query_ids.index(qid)].unsqueeze(0)\n",
+            "        new_q_hyde = dummy_hyde_expansion(q_emb)\n",
+            "        hyde_scores = util.dot_score(new_q_hyde, doc_embs)[0].cpu().tolist()\n",
+            "        hyde_results[qid] = {corpus_ids[i]: score for i, score in enumerate(hyde_scores)}\n",
+            "        \n",
+            "    hyde_ndcg = compute_ndcg_at_k(qrels, hyde_results, k=10)\n",
+            "    print(f'[HyDE Llama-3]  NDCG@10:  {hyde_ndcg:.4f}')\n"
+          ],
+          "metadata": {},
+          "execution_count": None,
+          "outputs": []
+        }
+    ]
+
+    notebook = {
+      "cells": cells,
+      "metadata": {
+        "kernelspec": {
+          "display_name": "Python 3",
+          "language": "python",
+          "name": "python3"
+        },
+        "language_info": {
+          "codemirror_mode": {"name": "ipython", "version": 3},
+          "file_extension": ".py",
+          "mimetype": "text/x-python",
+          "name": "python",
+          "nbconvert_exporter": "python",
+          "pygments_lexer": "ipython3",
+          "version": "3.10.12"
+        }
+      },
+      "nbformat": 4,
+      "nbformat_minor": 4
+    }
+
+    with open("run_standalone_baselines_kaggle.ipynb", "w") as f:
+        json.dump(notebook, f, indent=2)
+
+if __name__ == "__main__":
+    generate_standalone_baselines()
+    print("Successfully generated standalone baselines notebook.")
